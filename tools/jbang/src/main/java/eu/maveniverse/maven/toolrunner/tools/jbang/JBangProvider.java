@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,13 +30,13 @@ import java.util.Set;
  */
 public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisioner, ToolExecutor {
     public static final String NAME = "jbang";
+
+    private static final String EXE_NAME = IS_WINDOWS ? NAME + ".cmd" : NAME;
     private static final String PREFIX = NAME + ".";
 
     public static final String HOME = PREFIX + "home";
     public static final String CACHE = PREFIX + "cache";
     public static final String CONFIG = PREFIX + "config";
-
-    static final String EXE_NAME = IS_WINDOWS ? NAME + ".cmd" : NAME;
 
     // ToolProvider
 
@@ -84,15 +85,17 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     /**
      * Collects basic information about discovered JBang home.
      */
-    protected Optional<Map<String, String>> tryHome(String jbangHome) throws IOException, InterruptedException {
+    protected Optional<Map<String, String>> tryHome(String jBangHome) throws IOException, InterruptedException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
-        ToolExecution.Builder exe = executionTemplate(Map.of(JBangProvider.HOME, jbangHome))
+        Map<String, String> metadata = new HashMap<>(Map.of(JBangProvider.HOME, jBangHome));
+        ToolExecution.Builder exe = executionTemplate(metadata)
                 .addArguments("version", "--verbose")
                 .stdOut(out)
                 .stdErr(err);
         // TODO: maybe collect more info?
         // $ jbang version --verbose
+        // err:
         // [jbang] [0:150] jbang version 0.138.0
         // Cache: /home/cstamas/.jbang/cache
         // Config: /home/cstamas/.jbang
@@ -102,9 +105,10 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
         // Arch: x64
         // Shell: bash
         // Native Image: false
-        // 0.138.0             <<< STDOUT, the rest is STDERR!
+        // out:
+        // 0.138.0
 
-        ToolHandle.Result result = executeTool(Map.of(), exe.build());
+        ToolHandle.Result result = executeTool(metadata, exe.build());
         if (result.success()) {
             return Optional.of(Map.of(
                     ToolProvider.TOOL_NAME,
@@ -112,7 +116,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
                     ToolProvider.TOOL_VERSION,
                     out.toString().trim(),
                     JBangProvider.HOME,
-                    jbangHome));
+                    jBangHome));
         }
         return Optional.empty();
     }

@@ -45,8 +45,9 @@ public class DefaultToolHandler implements ToolHandler {
                     break;
                 }
             }
-            if (selected == null) {
-                Optional<Map<String, String>> provisioned = provision(metadata);
+            if (selected == null && toolProvider.toolProvisioner().isPresent()) {
+                Optional<Map<String, String>> provisioned =
+                        toolProvider.toolProvisioner().orElseThrow().provisionTool(metadata);
                 if (provisioned.isPresent()) {
                     selected = provisioned.orElseThrow();
                 }
@@ -59,13 +60,6 @@ public class DefaultToolHandler implements ToolHandler {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    private Optional<Map<String, String>> provision(Map<String, String> metadata) throws IOException {
-        if (toolProvider.toolProvisioner().isPresent()) {
-            return toolProvider.toolProvisioner().orElseThrow().provisionTool(metadata);
-        }
-        return Optional.empty();
     }
 
     @Override

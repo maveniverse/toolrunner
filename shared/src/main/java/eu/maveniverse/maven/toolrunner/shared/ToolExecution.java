@@ -88,14 +88,6 @@ public interface ToolExecution {
     Optional<OutputStream> stdErr();
 
     /**
-     * Simplest result, as interpreted by tool provider. The actual result may be much more than just this,
-     * depends on provider.
-     */
-    interface Result {
-        boolean success();
-    }
-
-    /**
      * Returns {@link Builder} created from this instance.
      */
     default Builder toBuilder() {

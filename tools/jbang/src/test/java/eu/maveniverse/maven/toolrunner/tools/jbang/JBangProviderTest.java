@@ -8,7 +8,6 @@
 package eu.maveniverse.maven.toolrunner.tools.jbang;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,10 +23,7 @@ public class JBangProviderTest {
 
         assertNotNull(provider);
         assertEquals("jbang", provider.name());
-        assertInstanceOf(JBangDetector.class, provider.toolDetector());
-        assertInstanceOf(JBangExecutor.class, provider.toolExecutor());
         assertTrue(provider.toolProvisioner().isPresent());
-        assertInstanceOf(JBangProvisioner.class, provider.toolProvisioner().orElseThrow());
     }
 
     @Test

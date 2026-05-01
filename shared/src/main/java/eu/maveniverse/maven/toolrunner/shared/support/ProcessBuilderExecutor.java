@@ -8,6 +8,7 @@
 package eu.maveniverse.maven.toolrunner.shared.support;
 
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
+import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +28,7 @@ public class ProcessBuilderExecutor {
     /**
      * The result carrier.
      */
-    public static class ProcessBuilderToolExecutorResult implements ToolExecution.Result {
+    public static class ProcessBuilderToolExecutorResult implements ToolHandle.Result {
         private final int exitCode;
 
         public ProcessBuilderToolExecutorResult(int exitCode) {

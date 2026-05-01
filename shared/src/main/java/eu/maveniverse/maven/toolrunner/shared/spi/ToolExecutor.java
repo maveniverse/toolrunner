@@ -19,6 +19,7 @@
 package eu.maveniverse.maven.toolrunner.shared.spi;
 
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
+import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import java.io.IOException;
 import java.util.Map;
 
@@ -36,6 +37,6 @@ public interface ToolExecutor {
      * Executes the tool with given execution. If tool was not detected, this call will install it as well, and then
      * execute. This method blocks, until tool execution finishes.
      */
-    ToolExecution.Result executeTool(Map<String, String> metadata, ToolExecution execution)
+    ToolHandle.Result executeTool(Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException;
 }

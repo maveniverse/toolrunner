@@ -31,12 +31,12 @@ public interface ToolExecutor {
      * Creates a "template" {@link ToolExecution} specific for this tool. Caller should set all the needed things,
      * at least the arguments. This method never returns {@code null}.
      */
-    ToolExecution.Builder executionTemplate(Map<String, String> metadata);
+    ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata);
 
     /**
      * Executes the tool with given execution. If tool was not detected, this call will install it as well, and then
      * execute. This method blocks, until tool execution finishes.
      */
-    ToolHandle.Result executeTool(Map<String, String> metadata, ToolExecution execution)
+    ToolHandle.Result executeTool(ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException;
 }

@@ -89,6 +89,12 @@
         <version>${project.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>eu.maveniverse.maven.shared</groupId>
+        <artifactId>core</artifactId>
+        <version>0.1.11</version>
+      </dependency>
+
       <!-- Logging (except API, runtime only) -->
       <dependency>
         <groupId>org.slf4j</groupId>
@@ -134,8 +140,36 @@
       </dependency>
       <dependency>
         <groupId>eu.maveniverse.maven.mima.extensions</groupId>
-        <artifactId>mmr</artifactId>
+        <artifactId>mhc4</artifactId>
         <version>${version.mima}</version>
+      </dependency>
+
+      <!-- hc4 -->
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>4.5.14</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpmime</artifactId>
+        <version>4.5.14</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>4.4.16</version>
+      </dependency>
+      <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>1.22.0</version>
       </dependency>
 
       <!-- Resolver + Maven -->

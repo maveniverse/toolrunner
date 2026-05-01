@@ -11,6 +11,7 @@ import static java.util.Objects.requireNonNull;
 
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
+import eu.maveniverse.maven.toolrunner.shared.spi.ToolContext;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -19,16 +20,18 @@ import java.util.Map;
 import java.util.Optional;
 
 public class DefaultToolHandler implements ToolHandler {
+    private final ToolContext toolContext;
     private final ToolProvider toolProvider;
 
-    public DefaultToolHandler(ToolProvider toolProvider) {
+    public DefaultToolHandler(ToolContext toolContext, ToolProvider toolProvider) {
+        this.toolContext = requireNonNull(toolContext);
         this.toolProvider = requireNonNull(toolProvider);
     }
 
     @Override
     public List<Map<String, String>> detectTool() {
         try {
-            return toolProvider.toolDetector().detectTool();
+            return toolProvider.toolDetector().detectTool(toolContext);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -47,7 +50,7 @@ public class DefaultToolHandler implements ToolHandler {
             }
             if (selected == null && toolProvider.toolProvisioner().isPresent()) {
                 Optional<Map<String, String>> provisioned =
-                        toolProvider.toolProvisioner().orElseThrow().provisionTool(metadata);
+                        toolProvider.toolProvisioner().orElseThrow().provisionTool(toolContext, metadata);
                 if (provisioned.isPresent()) {
                     selected = provisioned.orElseThrow();
                 }
@@ -55,7 +58,7 @@ public class DefaultToolHandler implements ToolHandler {
             if (selected == null) {
                 return Optional.empty();
             } else {
-                return Optional.of(new DefaultToolHandle(toolProvider.toolExecutor(), selected));
+                return Optional.of(new DefaultToolHandle(toolContext, selected, toolProvider.toolExecutor()));
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -64,6 +67,6 @@ public class DefaultToolHandler implements ToolHandler {
 
     @Override
     public ToolHandle toolHandle() {
-        return selectTool(ToolProvider.DEFAULT).orElseThrow();
+        return selectTool(ToolProvider.DEFAULT_METADATA).orElseThrow();
     }
 }

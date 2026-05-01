@@ -11,18 +11,21 @@ import static java.util.Objects.requireNonNull;
 
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
+import eu.maveniverse.maven.toolrunner.shared.spi.ToolContext;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolExecutor;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Map;
 
 public class DefaultToolHandle implements ToolHandle {
-    private final ToolExecutor toolExecutor;
+    private final ToolContext toolContext;
     private final Map<String, String> metadata;
+    private final ToolExecutor toolExecutor;
 
-    public DefaultToolHandle(ToolExecutor toolExecutor, Map<String, String> metadata) {
-        this.toolExecutor = requireNonNull(toolExecutor);
+    public DefaultToolHandle(ToolContext toolContext, Map<String, String> metadata, ToolExecutor toolExecutor) {
+        this.toolContext = requireNonNull(toolContext);
         this.metadata = Map.copyOf(metadata);
+        this.toolExecutor = requireNonNull(toolExecutor);
     }
 
     @Override
@@ -32,13 +35,13 @@ public class DefaultToolHandle implements ToolHandle {
 
     @Override
     public ToolExecution.Builder executionTemplate() {
-        return toolExecutor.executionTemplate(metadata);
+        return toolExecutor.executionTemplate(toolContext, metadata);
     }
 
     @Override
     public Result execute(ToolExecution execution) {
         try {
-            return toolExecutor.executeTool(metadata, execution);
+            return toolExecutor.executeTool(toolContext, metadata, execution);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         } catch (InterruptedException e) {

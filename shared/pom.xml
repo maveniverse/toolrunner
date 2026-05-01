@@ -33,7 +33,26 @@
     </dependency>
     <dependency>
       <groupId>eu.maveniverse.maven.mima.extensions</groupId>
-      <artifactId>mmr</artifactId>
+      <artifactId>mhc4</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>eu.maveniverse.maven.shared</groupId>
+      <artifactId>core</artifactId>
+    </dependency>
+
+    <!-- HttpClient4 (for mhc4 MIMA extension) -->
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
     </dependency>
 
     <!-- Resolver -->

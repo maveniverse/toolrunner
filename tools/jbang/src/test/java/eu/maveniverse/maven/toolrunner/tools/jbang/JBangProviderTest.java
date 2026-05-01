@@ -29,7 +29,8 @@ public class JBangProviderTest {
     @Test
     void detect() throws IOException {
         JBangProvider provider = new JBangProvider();
-        List<Map<String, String>> detected = provider.toolDetector().detectTool();
+        List<Map<String, String>> detected = provider.toolDetector().detectTool(null);
         assertNotNull(detected);
+        System.out.println(detected);
     }
 }

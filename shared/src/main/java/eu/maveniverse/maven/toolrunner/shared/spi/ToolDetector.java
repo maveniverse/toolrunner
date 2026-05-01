@@ -29,5 +29,5 @@ public interface ToolDetector {
     /**
      * Detects the tool, possibly multiple ones, present on system. Must never return {@code null}.
      */
-    List<Map<String, String>> detectTool() throws IOException;
+    List<Map<String, String>> detectTool(ToolContext context) throws IOException;
 }

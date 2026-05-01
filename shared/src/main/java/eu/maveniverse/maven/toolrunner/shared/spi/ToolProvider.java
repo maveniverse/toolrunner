@@ -36,7 +36,7 @@ public interface ToolProvider {
      * This instance of metadata (check for instance equality) represents "do your best" in cases like selection
      * or provisioning.
      */
-    Map<String, String> DEFAULT = Map.of();
+    Map<String, String> DEFAULT_METADATA = Map.of();
 
     /**
      * The tool prefix and keys in metadata.

@@ -7,13 +7,23 @@
  */
 package eu.maveniverse.maven.toolrunner.shared;
 
+import eu.maveniverse.maven.toolrunner.shared.internal.DefaultToolManager;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * The Tool Manager.
  */
-public interface ToolManager {
+public interface ToolManager extends Closeable {
+    /**
+     * Factory for tool manager.
+     */
+    static ToolManager create(Config config) throws IOException {
+        return new DefaultToolManager(config);
+    }
+
     /**
      * List of tool names that manager supports (have providers detected as available).
      * This method never returns {@code null}.

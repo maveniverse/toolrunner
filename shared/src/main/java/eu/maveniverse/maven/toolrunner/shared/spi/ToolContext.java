@@ -18,16 +18,31 @@
  */
 package eu.maveniverse.maven.toolrunner.shared.spi;
 
-import java.io.IOException;
+import static java.util.Objects.requireNonNull;
+
+import eu.maveniverse.maven.mima.context.Context;
+import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 
 /**
- * Represents a tool provisioner.
+ * Represents the tool context.
  */
-public interface ToolProvisioner {
+public interface ToolContext {
     /**
-     * Provisions the tool.
+     * Effective configuration.
      */
-    Optional<Map<String, String>> provisionTool(ToolContext context, Map<String, String> metadata) throws IOException;
+    record EffectiveConfig(
+            Path installationDirectory, Path tempDirectory, String userAgent, Map<String, String> httpHeaders) {
+        public EffectiveConfig(
+                Path installationDirectory, Path tempDirectory, String userAgent, Map<String, String> httpHeaders) {
+            this.installationDirectory = requireNonNull(installationDirectory);
+            this.tempDirectory = requireNonNull(tempDirectory);
+            this.userAgent = requireNonNull(userAgent);
+            this.httpHeaders = requireNonNull(httpHeaders);
+        }
+    }
+
+    EffectiveConfig effectiveConfig();
+
+    Context context();
 }

@@ -7,16 +7,21 @@
  */
 package eu.maveniverse.maven.toolrunner.tools.jbang;
 
+import static java.util.Objects.requireNonNull;
+
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
+import eu.maveniverse.maven.toolrunner.shared.spi.ToolContext;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolDetector;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolExecutor;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvisioner;
 import eu.maveniverse.maven.toolrunner.shared.support.OSTools;
 import eu.maveniverse.maven.toolrunner.shared.support.ProcessBuilderExecutor;
+import eu.maveniverse.maven.toolrunner.shared.support.Provisioners;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,21 +68,17 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     // ToolDetector
 
     @Override
-    public List<Map<String, String>> detectTool() throws IOException {
+    public List<Map<String, String>> detectTool(ToolContext context) throws IOException {
         ArrayList<Map<String, String>> detected = new ArrayList<>();
-        try {
-            // detect from path
-            Set<Path> paths =
-                    OSTools.dereference(OSTools.which(JBangProvider.EXE_NAME).orElse(Set.of()));
-            // consider only those ending with `bin/$EXE_NAME`
-            for (Path executable : paths) {
-                if (executable.toString().endsWith("/bin/" + JBangProvider.EXE_NAME)) {
-                    tryHome(executable.toString().replace("/bin/" + JBangProvider.EXE_NAME, ""))
-                            .ifPresent(detected::add);
-                }
+        // detect from path
+        Set<Path> paths =
+                OSTools.dereference(OSTools.which(JBangProvider.EXE_NAME).orElse(Set.of()));
+        // consider only those ending with `bin/$EXE_NAME`
+        for (Path executable : paths) {
+            if (executable.toString().endsWith("/bin/" + JBangProvider.EXE_NAME)) {
+                tryHome(context, executable.toString().replace("/bin/" + JBangProvider.EXE_NAME, ""))
+                        .ifPresent(detected::add);
             }
-        } catch (InterruptedException e) {
-            throw new IOException(e);
         }
         return List.copyOf(detected);
     }
@@ -85,11 +86,11 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     /**
      * Collects basic information about discovered JBang home.
      */
-    protected Optional<Map<String, String>> tryHome(String jBangHome) throws IOException, InterruptedException {
+    protected Optional<Map<String, String>> tryHome(ToolContext context, String jBangHome) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
         Map<String, String> metadata = new HashMap<>(Map.of(JBangProvider.HOME, jBangHome));
-        ToolExecution.Builder exe = executionTemplate(metadata)
+        ToolExecution.Builder exe = executionTemplate(context, metadata)
                 .addArguments("version", "--verbose")
                 .stdOut(out)
                 .stdErr(err);
@@ -108,30 +109,54 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
         // out:
         // 0.138.0
 
-        ToolHandle.Result result = executeTool(metadata, exe.build());
-        if (result.success()) {
-            return Optional.of(Map.of(
-                    ToolProvider.TOOL_NAME,
-                    JBangProvider.NAME,
-                    ToolProvider.TOOL_VERSION,
-                    out.toString().trim(),
-                    JBangProvider.HOME,
-                    jBangHome));
+        try {
+            ToolHandle.Result result = executeTool(context, metadata, exe.build());
+            if (result.success()) {
+                return Optional.of(Map.of(
+                        ToolProvider.TOOL_NAME,
+                        JBangProvider.NAME,
+                        ToolProvider.TOOL_VERSION,
+                        out.toString().trim(),
+                        JBangProvider.HOME,
+                        jBangHome));
+            }
+            return Optional.empty();
+        } catch (InterruptedException e) {
+            throw new IOException(e);
         }
-        return Optional.empty();
     }
 
     // ToolProvisioner
 
     @Override
-    public Optional<Map<String, String>> provisionTool(Map<String, String> metadata) throws IOException {
-        return Optional.empty();
+    public Optional<Map<String, String>> provisionTool(ToolContext context, Map<String, String> metadata)
+            throws IOException {
+        boolean isLatest = metadata == ToolProvider.DEFAULT_METADATA;
+
+        String uri;
+        String homePath;
+        if (isLatest) {
+            uri = "https://www.jbang.dev/releases/latest/download/jbang.zip";
+            homePath = "jbang";
+        } else {
+            String version = requireNonNull(metadata.get(ToolProvider.TOOL_VERSION));
+            uri = String.format(
+                    "https://github.com/jbangdev/jbang/releases/download/v%s/jbang-%s.zip", version, version);
+            homePath = "jbang-" + version;
+        }
+        Path installDir = context.effectiveConfig()
+                .installationDirectory()
+                .resolve(homePath)
+                .toAbsolutePath();
+        Path dl = Provisioners.httpGet(context, "github", URI.create(uri));
+        Provisioners.unpack(dl, installDir);
+        return tryHome(context, installDir.toString());
     }
 
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(Map<String, String> metadata) {
+    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
         ToolExecution.Builder builder;
         String jbangHome = metadata.get(JBangProvider.HOME);
         if (jbangHome != null) {
@@ -155,7 +180,8 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
-            Map<String, String> metadata, ToolExecution execution) throws IOException, InterruptedException {
+            ToolContext context, Map<String, String> metadata, ToolExecution execution)
+            throws IOException, InterruptedException {
         return ProcessBuilderExecutor.execute(execution);
     }
 }

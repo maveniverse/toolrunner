@@ -50,7 +50,7 @@ public class RunMojo extends AbstractMojo {
     private String toolVersion;
 
     @Parameter(property = "toolrunner.arguments", required = true)
-    private String arguments;
+    private String[] arguments;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -74,7 +74,7 @@ public class RunMojo extends AbstractMojo {
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     ByteArrayOutputStream err = new ByteArrayOutputStream();
                     ToolHandle.Result result = handle.execute(handle.executionTemplate()
-                            .arguments(arguments.split(" "))
+                            .addArguments(arguments)
                             .stdOut(out)
                             .stdErr(err)
                             .build());

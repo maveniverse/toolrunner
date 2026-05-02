@@ -29,7 +29,10 @@
                         <phase>process-resources</phase>
                         <configuration>
                             <toolName>jbang</toolName>
-                            <arguments>hello.java --option1=foo</arguments>
+                            <arguments>
+                                <argument>hello.java</argument>
+                                <argument>--option1=foo</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>

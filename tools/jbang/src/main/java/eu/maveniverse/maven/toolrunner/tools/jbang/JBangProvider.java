@@ -49,7 +49,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     public static final String CONFIG = PREFIX + "config";
 
     private static final String ENV_HOME = "JBANG_HOME";
-    private static final String ENV_CACHE_DIR = "JBANG_HOME";
+    private static final String ENV_CACHE_DIR = "JBANG_CACHE_DIR";
     private static final String ENV_CONFIG = "JBANG_CONFIG";
 
     // ToolProvider

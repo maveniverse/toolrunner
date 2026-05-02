@@ -89,9 +89,16 @@ public class RunMojo extends AbstractMojo {
                             throw new MojoFailureException("Failed to execute tool: " + stdout);
                         }
                     }
+                } else {
+                    // provisioning support is optional; if tool not already present, and provisioner not present
+                    if (toolVersion != null) {
+                        throw new MojoFailureException("Could not provision tool : " + toolName + " version " + toolVersion);
+                    } else {
+                        throw new MojoFailureException("Could not provision tool : " + toolName);
+                    }
                 }
             } else {
-                throw new MojoFailureException("No handler for tool: " + toolName);
+                throw new MojoFailureException("Unsupported tool: " + toolName);
             }
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);

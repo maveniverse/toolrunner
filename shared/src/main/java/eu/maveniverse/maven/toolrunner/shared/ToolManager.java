@@ -8,10 +8,11 @@
 package eu.maveniverse.maven.toolrunner.shared;
 
 import eu.maveniverse.maven.toolrunner.shared.internal.DefaultToolManager;
+import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * The Tool Manager.
@@ -28,7 +29,7 @@ public interface ToolManager extends Closeable {
      * List of tool names that manager supports (have providers detected as available).
      * This method never returns {@code null}.
      */
-    List<String> supportedToolNames();
+    Set<String> supportedToolNames();
 
     /**
      * Selects a {@link ToolHandler} based on name, if available. This method never returns {@code null}.
@@ -36,4 +37,10 @@ public interface ToolManager extends Closeable {
      * @param toolName the tool name, must not be {@code null}.
      */
     Optional<ToolHandler> selectToolByName(String toolName);
+
+    /**
+     * Performs manual tool provider registration. Provider must not be {@code null}. If provider with same name
+     * already existed. it will be replaced.
+     */
+    void registerProvider(ToolProvider provider);
 }

@@ -18,8 +18,6 @@
  */
 package eu.maveniverse.maven.toolrunner.shared.spi;
 
-import static java.util.Objects.requireNonNull;
-
 import eu.maveniverse.maven.mima.context.Context;
 import java.nio.file.Path;
 import java.util.Map;
@@ -29,20 +27,38 @@ import java.util.Map;
  */
 public interface ToolContext {
     /**
-     * Effective configuration.
+     * Returns the tool runner version.
      */
-    record EffectiveConfig(
-            Path installationDirectory, Path tempDirectory, String userAgent, Map<String, String> httpHeaders) {
-        public EffectiveConfig(
-                Path installationDirectory, Path tempDirectory, String userAgent, Map<String, String> httpHeaders) {
-            this.installationDirectory = requireNonNull(installationDirectory);
-            this.tempDirectory = requireNonNull(tempDirectory);
-            this.userAgent = requireNonNull(userAgent);
-            this.httpHeaders = requireNonNull(httpHeaders);
-        }
-    }
+    String toolRunnerVersion();
 
-    EffectiveConfig effectiveConfig();
+    /**
+     * If true, tool providers are allowed to detect tools from path of current user.
+     */
+    boolean allowPathDetection();
 
-    Context context();
+    /**
+     * Tool runner installation direction, where tools should be installed.
+     */
+    Path installationDirectory();
+
+    /**
+     * Tool runner temporary directory. Providers should use this path instead trying to detect Java System Property
+     * as Tool Runner may be embedded into something.
+     */
+    Path tempDirectory();
+
+    /**
+     * The user agent to use in case of HTTP provisioning.
+     */
+    String userAgent();
+
+    /**
+     * The extra HTTP headers to use in case of HTTP provisioning.
+     */
+    Map<String, String> httpHeaders();
+
+    /**
+     * Creates MIMA context. Caller must make sure created context is closed.
+     */
+    Context createMimaContext();
 }

@@ -16,9 +16,16 @@ import java.util.Optional;
  */
 public interface Config {
     /**
-     * If {@code true}, the manager should be considered transient, and will clean up once closed.
+     * If {@code true}, the manager should be considered transient, and will clean up once closed (remove all
+     * installations happened during lifetime of it).
      */
     boolean isTransient();
+
+    /**
+     * If {@code true}, the tool providers are allowed to discover tools from path too. Otherwise, only the
+     * {@link #installationDirectory()} is allowed.
+     */
+    boolean allowPathDetection();
 
     /**
      * The directory where tools should be provisioned.
@@ -51,6 +58,7 @@ public interface Config {
 
     class Builder {
         private boolean isTransient;
+        private boolean allowPathDetection;
         private Path installationDirectory;
         private Path tempDirectory;
         private String userAgent;
@@ -58,6 +66,7 @@ public interface Config {
 
         private Builder() {
             this.isTransient = true;
+            this.allowPathDetection = true;
             this.installationDirectory = null;
             this.tempDirectory = null;
             this.userAgent = null;
@@ -66,6 +75,11 @@ public interface Config {
 
         public Builder isTransient(boolean isTransient) {
             this.isTransient = isTransient;
+            return this;
+        }
+
+        public Builder allowPathDetection(boolean allowPathDetection) {
+            this.allowPathDetection = allowPathDetection;
             return this;
         }
 
@@ -90,11 +104,13 @@ public interface Config {
         }
 
         public Config build() {
-            return new Impl(isTransient, installationDirectory, tempDirectory, userAgent, httpHeaders);
+            return new Impl(
+                    isTransient, allowPathDetection, installationDirectory, tempDirectory, userAgent, httpHeaders);
         }
 
         private static class Impl implements Config {
             private final boolean isTransient;
+            private final boolean allowPathDetection;
             private final Path installationDirectory;
             private final Path tempDirectory;
             private final String userAgent;
@@ -102,11 +118,13 @@ public interface Config {
 
             private Impl(
                     boolean isTransient,
+                    boolean allowPathDetection,
                     Path installationDirectory,
                     Path tempDirectory,
                     String userAgent,
                     Map<String, String> httpHeaders) {
                 this.isTransient = isTransient;
+                this.allowPathDetection = allowPathDetection;
                 this.installationDirectory = installationDirectory;
                 this.tempDirectory = tempDirectory;
                 this.userAgent = userAgent;
@@ -116,6 +134,11 @@ public interface Config {
             @Override
             public boolean isTransient() {
                 return isTransient;
+            }
+
+            @Override
+            public boolean allowPathDetection() {
+                return allowPathDetection;
             }
 
             @Override

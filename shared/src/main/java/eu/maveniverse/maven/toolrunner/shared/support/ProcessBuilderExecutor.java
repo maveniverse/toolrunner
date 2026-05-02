@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 /**
  * Reusable executor using {@link ProcessBuilder}.
  */
-public class ProcessBuilderExecutor {
+public final class ProcessBuilderExecutor {
     private ProcessBuilderExecutor() {}
 
     /**

@@ -92,7 +92,8 @@ public class RunMojo extends AbstractMojo {
                 } else {
                     // provisioning support is optional; if tool not already present, and provisioner not present
                     if (toolVersion != null) {
-                        throw new MojoFailureException("Could not provision tool : " + toolName + " version " + toolVersion);
+                        throw new MojoFailureException(
+                                "Could not provision tool : " + toolName + " version " + toolVersion);
                     } else {
                         throw new MojoFailureException("Could not provision tool : " + toolName);
                     }

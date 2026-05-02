@@ -20,6 +20,7 @@ package eu.maveniverse.maven.toolrunner.shared;
 
 import static java.util.Objects.requireNonNull;
 
+import eu.maveniverse.maven.shared.core.fs.FileUtils;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -105,8 +106,7 @@ public interface ToolExecution {
      * Returns new builder pre-set to run command. The discovery of user cwd also discovered by standard means.
      */
     static Builder ofCommand(String command) {
-        return new Builder(
-                command, null, getCanonicalPath(Path.of(System.getProperty("user.dir"))), null, null, null, null);
+        return new Builder(command, null, FileUtils.discoverUserCurrentWorkingDirectory(), null, null, null, null);
     }
 
     class Builder {
@@ -168,7 +168,7 @@ public interface ToolExecution {
         }
 
         public Builder cwd(Path cwd) {
-            this.cwd = getCanonicalPath(requireNonNull(cwd, "cwd"));
+            this.cwd = FileUtils.normalizePath(requireNonNull(cwd, "cwd"));
             return this;
         }
 
@@ -225,7 +225,7 @@ public interface ToolExecution {
                     OutputStream stdErr) {
                 this.command = requireNonNull(command);
                 this.arguments = arguments == null ? Collections.emptyList() : new ArrayList<>(arguments);
-                this.cwd = getCanonicalPath(requireNonNull(cwd));
+                this.cwd = requireNonNull(cwd);
                 this.environmentVariables = environmentVariables != null && !environmentVariables.isEmpty()
                         ? Collections.unmodifiableMap(new HashMap<>(environmentVariables))
                         : null;
@@ -269,18 +269,5 @@ public interface ToolExecution {
                 return Optional.ofNullable(stdErr);
             }
         }
-    }
-
-    static Path discoverUserHomeDirectory() {
-        String userHome = System.getProperty("user.home");
-        if (userHome == null) {
-            throw new IllegalStateException("Requires user.home Java System Property set");
-        }
-        return getCanonicalPath(Path.of(userHome));
-    }
-
-    static Path getCanonicalPath(Path path) {
-        requireNonNull(path, "path");
-        return path.toAbsolutePath().normalize();
     }
 }

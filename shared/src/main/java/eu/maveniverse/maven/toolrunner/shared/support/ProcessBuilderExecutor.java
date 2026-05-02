@@ -45,6 +45,9 @@ public class ProcessBuilderExecutor {
         }
     }
 
+    /**
+     * Executes given execution.
+     */
     public static ProcessBuilderToolExecutorResult execute(ToolExecution execution)
             throws IOException, InterruptedException {
         // Adjust the process invocation to circumvent possible limited buffers
@@ -69,6 +72,9 @@ public class ProcessBuilderExecutor {
         return new ProcessBuilderToolExecutorResult(process.waitFor());
     }
 
+    /**
+     * Pumps standard streams of sub-process to execution provided streams.
+     */
     public static CountDownLatch pump(Process p, ToolExecution execution) {
         CountDownLatch latch = new CountDownLatch(3);
         String suffix = "-pump-" + p.pid();

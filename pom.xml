@@ -92,7 +92,7 @@
       <dependency>
         <groupId>eu.maveniverse.maven.shared</groupId>
         <artifactId>core</artifactId>
-        <version>0.1.11</version>
+        <version>0.2.0</version>
       </dependency>
 
       <!-- Logging (except API, runtime only) -->

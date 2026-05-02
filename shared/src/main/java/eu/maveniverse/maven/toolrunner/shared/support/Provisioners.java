@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -28,7 +29,7 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
 
 /**
  * Reusable provisioners.
@@ -42,23 +43,22 @@ public class Provisioners {
      * @param context The MIMA context, must not be {@code null}.
      * @param artifact The GAV in form of {@code <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>}, must not be {@code null}.
      */
-    public static Path resolveArtifact(Context context, String artifact) throws IOException {
+    public static Optional<Path> resolveArtifact(Context context, String artifact) throws IOException {
         requireNonNull(context);
         requireNonNull(artifact);
         try {
-            ArtifactResult result = context.repositorySystem()
+            return Optional.of(context.repositorySystem()
                     .resolveArtifact(
                             context.repositorySystemSession(),
                             new ArtifactRequest(
-                                    new DefaultArtifact(artifact), context.remoteRepositories(), "toolrunner"));
-            if (result.isResolved()) {
-                return result.getArtifact().getFile().toPath();
-            } else {
-                IOException e = new IOException("Unable to resolve artifact " + artifact);
-                result.getExceptions().forEach(e::addSuppressed);
-                throw e;
-            }
+                                    new DefaultArtifact(artifact), context.remoteRepositories(), "toolrunner"))
+                    .getArtifact()
+                    .getFile()
+                    .toPath());
         } catch (ArtifactResolutionException e) {
+            if (e.getResult().getExceptions().get(0) instanceof ArtifactNotFoundException) {
+                return Optional.empty();
+            }
             throw new IOException(e);
         }
     }

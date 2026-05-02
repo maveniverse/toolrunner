@@ -15,6 +15,22 @@ import java.util.Optional;
  * The Tool Handler.
  */
 public interface ToolHandler {
+
+    /**
+     * The tool prefix and keys in metadata.
+     */
+    String TOOL_PREFIX = "tool.";
+
+    /**
+     * Metadata key for tool name.
+     */
+    String TOOL_NAME = TOOL_PREFIX + "name";
+
+    /**
+     * Metadata key for tool version.
+     */
+    String TOOL_VERSION = TOOL_PREFIX + "version";
+
     /**
      * The tool metadata. Depending on tool, this may be some capability specifics and so on.
      * Two keys are always present:

@@ -67,6 +67,6 @@ public class DefaultToolHandler implements ToolHandler {
 
     @Override
     public ToolHandle toolHandle() {
-        return selectTool(ToolProvider.DEFAULT_METADATA).orElseThrow();
+        return selectTool(Map.of()).orElseThrow();
     }
 }

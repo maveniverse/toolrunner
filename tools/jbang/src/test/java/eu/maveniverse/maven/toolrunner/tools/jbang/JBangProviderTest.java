@@ -14,7 +14,6 @@ import eu.maveniverse.maven.toolrunner.shared.Config;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
-import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -51,7 +50,7 @@ public class JBangProviderTest {
             handle.execute(
                     handle.executionTemplate().argument("version").stdOut(baos).build());
             assertEquals(
-                    handle.toolMetadata().get(ToolProvider.TOOL_VERSION),
+                    handle.toolMetadata().get(ToolHandler.TOOL_VERSION),
                     baos.toString().trim());
 
             // detect again, we should have one more provisioned

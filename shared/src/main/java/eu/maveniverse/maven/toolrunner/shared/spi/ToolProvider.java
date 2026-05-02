@@ -19,7 +19,6 @@
 package eu.maveniverse.maven.toolrunner.shared.spi;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -31,27 +30,6 @@ public interface ToolProvider {
      */
     boolean IS_WINDOWS =
             System.getProperty("os.name", "unknown").toLowerCase(Locale.ENGLISH).startsWith("windows");
-
-    /**
-     * This instance of metadata (check for instance equality) represents "do your best" in cases like selection
-     * or provisioning.
-     */
-    Map<String, String> DEFAULT_METADATA = Map.of();
-
-    /**
-     * The tool prefix and keys in metadata.
-     */
-    String TOOL_PREFIX = "tool.";
-
-    /**
-     * Metadata key for tool name.
-     */
-    String TOOL_NAME = TOOL_PREFIX + "name";
-
-    /**
-     * Metadata key for tool version.
-     */
-    String TOOL_VERSION = TOOL_PREFIX + "version";
 
     /**
      * Returns the tool name this provider supports. It must return non-empty string, never {@code null}.

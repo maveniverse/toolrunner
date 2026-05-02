@@ -12,6 +12,7 @@ import static java.util.Objects.requireNonNull;
 import eu.maveniverse.maven.shared.core.fs.FileUtils;
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
+import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolContext;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolDetector;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolExecutor;
@@ -144,9 +145,9 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
             ToolHandle.Result result = executeTool(context, metadata, exe.build());
             if (result.success()) {
                 return Optional.of(Map.of(
-                        ToolProvider.TOOL_NAME,
+                        ToolHandler.TOOL_NAME,
                         JBangProvider.NAME,
-                        ToolProvider.TOOL_VERSION,
+                        ToolHandler.TOOL_VERSION,
                         out.toString().trim(),
                         JBangProvider.HOME,
                         jBangHome.toString()));
@@ -162,7 +163,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     @Override
     public Optional<Map<String, String>> provisionTool(ToolContext context, Map<String, String> metadata)
             throws IOException {
-        boolean isLatest = metadata == ToolProvider.DEFAULT_METADATA;
+        boolean isLatest = !metadata.containsKey(ToolHandler.TOOL_VERSION);
 
         String uri;
         String homePath;
@@ -171,7 +172,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
             uri = "https://www.jbang.dev/releases/latest/download/jbang.zip";
             homePath = NAME;
         } else {
-            version = requireNonNull(metadata.get(ToolProvider.TOOL_VERSION));
+            version = requireNonNull(metadata.get(ToolHandler.TOOL_VERSION));
             uri = String.format(
                     "https://github.com/jbangdev/jbang/releases/download/v%s/jbang-%s.zip", version, version);
             homePath = NAME + "-" + version;
@@ -185,7 +186,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
             Map<String, String> provisionedMetadata = new HashMap<>(provisioned.orElseThrow());
             if (version == null) {
                 Path versionedInstallDir = context.installationDirectory()
-                        .resolve(NAME + "-" + requireNonNull(provisionedMetadata.get(ToolProvider.TOOL_VERSION)));
+                        .resolve(NAME + "-" + requireNonNull(provisionedMetadata.get(ToolHandler.TOOL_VERSION)));
                 Files.move(installDir, versionedInstallDir, StandardCopyOption.REPLACE_EXISTING);
                 provisionedMetadata.put(HOME, versionedInstallDir.toString());
                 installDir = versionedInstallDir;

@@ -7,18 +7,94 @@
  */
 package eu.maveniverse.maven.toolrunner.plugin;
 
+import eu.maveniverse.maven.toolrunner.shared.Config;
+import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
+import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
+import eu.maveniverse.maven.toolrunner.shared.ToolManager;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Optional;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Runs the selected tool.
  */
 @Mojo(name = "run", threadSafe = true)
 public class RunMojo extends AbstractMojo {
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    @Parameter(property = "toolrunner.isTransient", defaultValue = "true")
+    private boolean isTransient;
+
+    @Parameter(property = "toolrunner.allowPathDetection", defaultValue = "false")
+    private boolean allowPathDetection;
+
+    @Parameter(property = "toolrunner.installationDirectory", defaultValue = "${project.build.directory}/toolrunner")
+    private File installationDirectory;
+
+    @Parameter(property = "toolrunner.tempDirectory")
+    private File tempDirectory;
+
+    @Parameter(property = "toolrunner.toolName", required = true)
+    private String toolName;
+
+    @Parameter(property = "toolrunner.toolVersion")
+    private String toolVersion;
+
+    @Parameter(property = "toolrunner.arguments", required = true)
+    private String arguments;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        throw new MojoExecutionException("Not implemented yet");
+        try (ToolManager toolManager = ToolManager.create(Config.builder()
+                .isTransient(isTransient)
+                .allowPathDetection(allowPathDetection)
+                .installationDirectory(installationDirectory.toPath())
+                .tempDirectory(tempDirectory != null ? tempDirectory.toPath() : null)
+                .build())) {
+            Optional<ToolHandler> maybeHandler = toolManager.selectToolByName(toolName);
+            if (maybeHandler.isPresent()) {
+                ToolHandler handler = maybeHandler.orElseThrow();
+                HashMap<String, String> metadata = new HashMap<>();
+                metadata.put(ToolHandler.TOOL_NAME, toolName);
+                if (toolVersion != null) {
+                    metadata.put(ToolHandler.TOOL_VERSION, toolVersion);
+                }
+                Optional<ToolHandle> maybeHandle = handler.selectTool(metadata);
+                if (maybeHandle.isPresent()) {
+                    ToolHandle handle = maybeHandle.orElseThrow();
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    ByteArrayOutputStream err = new ByteArrayOutputStream();
+                    ToolHandle.Result result = handle.execute(handle.executionTemplate()
+                            .arguments(arguments.split(" "))
+                            .stdOut(out)
+                            .stdErr(err)
+                            .build());
+                    if (result.success()) {
+                        log.info(out.toString().trim());
+                    } else {
+                        String stdout = out.toString().trim();
+                        String stderr = err.size() > 0 ? err.toString().trim() : null;
+                        if (stderr != null) {
+                            throw new MojoFailureException("Failed to execute tool: " + stdout + " (err: " + err + ")");
+                        } else {
+                            throw new MojoFailureException("Failed to execute tool: " + stdout);
+                        }
+                    }
+                }
+            } else {
+                throw new MojoFailureException("No handler for tool: " + toolName);
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        }
     }
 }

@@ -47,8 +47,11 @@ public class DefaultToolManager implements ToolManager, ToolContext {
         this.toolRunnerVersion = MavenUtils.discoverArtifactVersion(
                 getClass().getClassLoader(), "eu.maveniverse.maven.toolrunner", "shared", "UNKNOWN");
         this.allowPathDetection = config.allowPathDetection();
-        this.installationDirectory = FileUtils.normalizePath(
-                config.installationDirectory().orElse(Files.createTempDirectory("toolrunner-installation")));
+        this.installationDirectory = FileUtils.normalizePath(config.installationDirectory()
+                .orElse(
+                        this.isTransient
+                                ? Files.createTempDirectory("toolrunner-installation")
+                                : FileUtils.discoverUserHomeDirectory().resolve(".toolrunner")));
         this.tempDirectory =
                 FileUtils.normalizePath(config.tempDirectory().orElse(Files.createTempDirectory("toolrunner-temp")));
         this.userAgent = config.userAgent().orElse("ToolRunner/" + this.toolRunnerVersion);

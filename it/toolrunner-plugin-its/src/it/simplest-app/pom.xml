@@ -30,6 +30,12 @@
     <build>
         <plugins>
             <plugin>
+                <!-- Must up compiler in IT due 3.8.x -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+            </plugin>
+            <plugin>
                 <groupId>eu.maveniverse.maven.plugins</groupId>
                 <artifactId>toolbox</artifactId>
                 <version>0.15.8</version>

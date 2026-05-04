@@ -29,6 +29,10 @@
     </dependency>
     <dependency>
       <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+      <artifactId>isx</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
       <artifactId>jbang</artifactId>
     </dependency>
     <dependency>

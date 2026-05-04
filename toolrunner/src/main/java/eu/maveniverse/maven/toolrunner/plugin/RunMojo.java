@@ -32,27 +32,53 @@ import org.slf4j.LoggerFactory;
 public class RunMojo extends AbstractMojo {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Optional: whether tool manager along with installation directory should be considered "transient" or not.
+     * In case of transient, the tools that are provisioned are deleted upon manager is being closed.
+     */
     @Parameter(property = "toolrunner.isTransient", defaultValue = "true")
     private boolean isTransient;
 
+    /**
+     * Optional: whether tool detection should consider current use {@code $PATH} environment variable as well, to
+     * detect tools.
+     */
     @Parameter(property = "toolrunner.allowPathDetection", defaultValue = "false")
     private boolean allowPathDetection;
 
-    @Parameter(property = "toolrunner.installationDirectory", defaultValue = "${project.build.directory}/toolrunner")
+    /**
+     * Optional: sets default installation directory, if default is not good fit.
+     */
+    @Parameter(property = "toolrunner.installationDirectory")
     private File installationDirectory;
 
+    /**
+     * Optional: sets default temporary directory, if default is not good fit.
+     */
     @Parameter(property = "toolrunner.tempDirectory")
     private File tempDirectory;
 
+    /**
+     * Mandatory: The tool name execution should invoke. Note: the tool provider should be added to plugin dependency.
+     */
     @Parameter(property = "toolrunner.toolName", required = true)
     private String toolName;
 
+    /**
+     * Optional: the tool version, if "latest" (as interpreted by tool provider) is not appropriate.
+     */
     @Parameter(property = "toolrunner.toolVersion")
     private String toolVersion;
 
+    /**
+     * Optional: the command, if it differs from the command that tool provider pre-sets.
+     */
     @Parameter(property = "toolrunner.command")
     private String command;
 
+    /**
+     * Mandatory: The command arguments, as array of strings.
+     */
     @Parameter(property = "toolrunner.arguments", required = true)
     private String[] arguments;
 
@@ -61,7 +87,7 @@ public class RunMojo extends AbstractMojo {
         try (ToolManager toolManager = ToolManager.create(Config.builder()
                 .isTransient(isTransient)
                 .allowPathDetection(allowPathDetection)
-                .installationDirectory(installationDirectory.toPath())
+                .installationDirectory(installationDirectory != null ? installationDirectory.toPath() : null)
                 .tempDirectory(tempDirectory != null ? tempDirectory.toPath() : null)
                 .build())) {
             Optional<ToolHandler> maybeHandler = toolManager.selectToolByName(toolName);

@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisioner, ToolExecutor {
     public static final String NAME = "jbang";
 
-    private static final String EXE_NAME = IS_WINDOWS ? NAME + ".cmd" : NAME;
+    private static final String EXE_NAME = IS_WINDOWS ? "jbang.cmd" : "jbang";
     private static final String PREFIX = NAME + ".";
 
     public static final String HOME = PREFIX + "home";

@@ -166,17 +166,14 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
                 context, "github", URI.create("https://raw.githubusercontent.com/Sanne/incus-spawn/main/get-isx.sh"))) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ByteArrayOutputStream err = new ByteArrayOutputStream();
-            ToolExecution cmd = ToolExecution.ofCommand("cat")
+            ToolExecution cmd = ToolExecution.ofCommand("sh")
                     .addArguments(dl.getPath().toString())
-                    .addArguments("| sh")
                     .environmentVariable("INSTALL_DIR", installDir.toString())
                     .stdOut(out)
                     .stdErr(err)
                     .build();
             installationSuccess = ProcessBuilderExecutor.execute(cmd).success();
-            if (!installationSuccess) {
-                System.out.println(out);
-            }
+            // TODO: log
         } catch (InterruptedException e) {
             throw new IOException("Provisioning interrupted", e);
         }

@@ -27,10 +27,6 @@
     <maven>${requireRuntimeMavenVersion.range}</maven>
   </prerequisites>
 
-  <properties>
-    <mainClass>eu.maveniverse.maven.toolrunner.plugin.CLI</mainClass>
-  </properties>
-
   <dependencies>
     <!-- Tool Runner -->
     <dependency>

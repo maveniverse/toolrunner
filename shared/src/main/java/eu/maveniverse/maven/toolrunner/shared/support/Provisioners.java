@@ -84,7 +84,8 @@ public final class Provisioners {
             } catch (VersionResolutionException e) {
                 throw new IOException("Unable to resolve artifact version " + gav, e);
             } catch (ArtifactResolutionException e) {
-                if (e.getResult().getExceptions().get(0) instanceof ArtifactNotFoundException) {
+                if (!e.getResult().getExceptions().isEmpty()
+                        && e.getResult().getExceptions().get(0) instanceof ArtifactNotFoundException) {
                     return Optional.empty();
                 }
                 throw new IOException("Unable to resolve artifact " + gav, e);

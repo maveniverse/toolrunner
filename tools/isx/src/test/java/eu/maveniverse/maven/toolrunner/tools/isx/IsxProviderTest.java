@@ -46,12 +46,10 @@ public class IsxProviderTest {
 
             // provision latest isx
             ToolHandle handle = handler.toolHandle();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            handle.execute(handle.executionTemplate()
-                    .argument("--version")
-                    .stdOut(baos)
-                    .build());
-            assertTrue(baos.toString().trim().contains(handle.toolMetadata().get(ToolHandler.TOOL_VERSION)));
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            handle.execute(
+                    handle.executionTemplate().argument("--version").stdOut(out).build());
+            assertTrue(out.toString().trim().contains(handle.toolMetadata().get(ToolHandler.TOOL_VERSION)));
 
             // detect again, we should have one more provisioned
             detected = handler.detectTool();

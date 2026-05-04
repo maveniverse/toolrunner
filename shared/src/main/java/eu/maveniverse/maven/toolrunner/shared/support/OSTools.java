@@ -49,7 +49,11 @@ public final class OSTools {
                 if (errCode == 0) {
                     HashSet<Path> paths = new HashSet<>();
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
-                        paths.add(Path.of(reader.readLine()));
+                        String line = reader.readLine();
+                        while (line != null) {
+                            paths.add(Path.of(line));
+                            line = reader.readLine();
+                        }
                     }
                     return Optional.of(paths);
                 }

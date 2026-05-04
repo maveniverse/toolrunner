@@ -91,7 +91,8 @@ public class RunMojo extends AbstractMojo {
                         String stdout = out.toString().trim();
                         String stderr = err.size() > 0 ? err.toString().trim() : null;
                         if (stderr != null) {
-                            throw new MojoFailureException("Failed to execute tool: " + stdout + " (err: " + err + ")");
+                            throw new MojoFailureException(
+                                    "Failed to execute tool: " + stdout + " (err: " + stderr + ")");
                         } else {
                             throw new MojoFailureException("Failed to execute tool: " + stdout);
                         }

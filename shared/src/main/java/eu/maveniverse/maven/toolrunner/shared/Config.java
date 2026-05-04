@@ -10,6 +10,7 @@ package eu.maveniverse.maven.toolrunner.shared;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The Configuration.
@@ -50,6 +51,11 @@ public interface Config {
     Optional<Map<String, String>> httpHeaders();
 
     /**
+     * The timeout to run tool, or in other words, the maximum runtime of the tool. By default, 60 minutes.
+     */
+    Optional<Long> timeout();
+
+    /**
      * Creates new empty builder.
      */
     static Builder builder() {
@@ -63,6 +69,7 @@ public interface Config {
         private Path tempDirectory;
         private String userAgent;
         private Map<String, String> httpHeaders;
+        private Long timeout;
 
         private Builder() {
             this.isTransient = true;
@@ -71,6 +78,7 @@ public interface Config {
             this.tempDirectory = null;
             this.userAgent = null;
             this.httpHeaders = null;
+            this.timeout = null;
         }
 
         public Builder isTransient(boolean isTransient) {
@@ -103,9 +111,20 @@ public interface Config {
             return this;
         }
 
+        public Builder timeout(long timeout, TimeUnit timeUnit) {
+            this.timeout = timeUnit.toMillis(timeout);
+            return this;
+        }
+
         public Config build() {
             return new Impl(
-                    isTransient, allowPathDetection, installationDirectory, tempDirectory, userAgent, httpHeaders);
+                    isTransient,
+                    allowPathDetection,
+                    installationDirectory,
+                    tempDirectory,
+                    userAgent,
+                    httpHeaders,
+                    timeout);
         }
 
         private static class Impl implements Config {
@@ -115,6 +134,7 @@ public interface Config {
             private final Path tempDirectory;
             private final String userAgent;
             private final Map<String, String> httpHeaders;
+            private final Long timeout;
 
             private Impl(
                     boolean isTransient,
@@ -122,13 +142,15 @@ public interface Config {
                     Path installationDirectory,
                     Path tempDirectory,
                     String userAgent,
-                    Map<String, String> httpHeaders) {
+                    Map<String, String> httpHeaders,
+                    Long timeout) {
                 this.isTransient = isTransient;
                 this.allowPathDetection = allowPathDetection;
                 this.installationDirectory = installationDirectory;
                 this.tempDirectory = tempDirectory;
                 this.userAgent = userAgent;
                 this.httpHeaders = httpHeaders;
+                this.timeout = timeout;
             }
 
             @Override
@@ -159,6 +181,11 @@ public interface Config {
             @Override
             public Optional<Map<String, String>> httpHeaders() {
                 return Optional.ofNullable(httpHeaders);
+            }
+
+            @Override
+            public Optional<Long> timeout() {
+                return Optional.ofNullable(timeout);
             }
         }
     }

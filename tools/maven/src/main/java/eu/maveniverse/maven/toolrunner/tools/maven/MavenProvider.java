@@ -196,6 +196,6 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution);
+        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
     }
 }

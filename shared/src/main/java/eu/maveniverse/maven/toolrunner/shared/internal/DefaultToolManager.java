@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DefaultToolManager implements ToolManager, ToolContext {
@@ -37,6 +38,7 @@ public class DefaultToolManager implements ToolManager, ToolContext {
     private final Path tempDirectory;
     private final String userAgent;
     private final Map<String, String> httpHeaders;
+    private final long timeout;
 
     private final AtomicBoolean closed;
     private final Map<String, ToolProvider> toolProviders;
@@ -58,6 +60,7 @@ public class DefaultToolManager implements ToolManager, ToolContext {
         Files.createDirectories(this.installationDirectory);
         this.userAgent = config.userAgent().orElse("ToolRunner/" + this.toolRunnerVersion);
         this.httpHeaders = config.httpHeaders().orElse(Map.of());
+        this.timeout = config.timeout().orElse(TimeUnit.HOURS.toMillis(1L));
 
         this.closed = new AtomicBoolean(false);
         this.toolProviders = new HashMap<>();
@@ -97,6 +100,11 @@ public class DefaultToolManager implements ToolManager, ToolContext {
     @Override
     public Map<String, String> httpHeaders() {
         return httpHeaders;
+    }
+
+    @Override
+    public long toolTimeout() {
+        return timeout;
     }
 
     @Override

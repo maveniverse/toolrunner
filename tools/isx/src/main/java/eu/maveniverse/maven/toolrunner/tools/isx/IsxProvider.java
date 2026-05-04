@@ -172,7 +172,8 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
                     .stdOut(out)
                     .stdErr(err)
                     .build();
-            installationSuccess = ProcessBuilderExecutor.execute(cmd).success();
+            installationSuccess =
+                    ProcessBuilderExecutor.execute(cmd, context.toolTimeout()).success();
             // TODO: log
         } catch (InterruptedException e) {
             throw new IOException("Provisioning interrupted", e);
@@ -213,6 +214,6 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution);
+        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
     }
 }

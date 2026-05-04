@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import javax.swing.*;
 
 /**
  * The JBang tool provider.
@@ -226,6 +227,6 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution);
+        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
     }
 }

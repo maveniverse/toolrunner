@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -48,7 +49,7 @@ public final class ProcessBuilderExecutor {
     /**
      * Executes given execution.
      */
-    public static ProcessBuilderToolExecutorResult execute(ToolExecution execution)
+    public static ProcessBuilderToolExecutorResult execute(ToolExecution execution, long timeoutMillis)
             throws IOException, InterruptedException {
         // Adjust the process invocation to circumvent possible limited buffers
         ArrayList<String> command = new ArrayList<>();
@@ -59,8 +60,11 @@ public final class ProcessBuilderExecutor {
             command.add("sh");
             command.add("-c");
         }
-        command.add(Stream.concat(Stream.of(execution.command()), execution.arguments().stream())
-                .collect(Collectors.joining(" ")));
+        command.add("\""
+                + Stream.concat(Stream.of(execution.command()), execution.arguments().stream())
+                        .map(s -> s.replace("\"", "\\\""))
+                        .collect(Collectors.joining("\" \""))
+                + "\"");
 
         ProcessBuilder pb =
                 new ProcessBuilder().command(command).directory(execution.cwd().toFile());
@@ -68,8 +72,17 @@ public final class ProcessBuilderExecutor {
         execution.environmentVariables().ifPresent(env -> pb.environment().putAll(env));
 
         Process process = pb.start();
-        pump(process, execution).await();
-        return new ProcessBuilderToolExecutorResult(process.waitFor());
+        try {
+            if (pump(process, execution).await(timeoutMillis, TimeUnit.MILLISECONDS)) {
+                return new ProcessBuilderToolExecutorResult(process.waitFor());
+            } else {
+                process.destroyForcibly();
+                throw new IOException("Process timeout");
+            }
+        } catch (InterruptedException e) {
+            process.destroyForcibly();
+            throw e;
+        }
     }
 
     /**
@@ -79,8 +92,7 @@ public final class ProcessBuilderExecutor {
         CountDownLatch latch = new CountDownLatch(3);
         String suffix = "-pump-" + p.pid();
         Thread stdoutPump = new Thread(() -> {
-            try {
-                OutputStream stdout = execution.stdOut().orElse(OutputStream.nullOutputStream());
+            try (OutputStream stdout = execution.stdOut().orElse(OutputStream.nullOutputStream())) {
                 p.getInputStream().transferTo(stdout);
                 stdout.flush();
             } catch (IOException e) {
@@ -90,10 +102,10 @@ public final class ProcessBuilderExecutor {
             }
         });
         stdoutPump.setName("stdout" + suffix);
+        stdoutPump.setDaemon(true);
         stdoutPump.start();
         Thread stderrPump = new Thread(() -> {
-            try {
-                OutputStream stderr = execution.stdErr().orElse(OutputStream.nullOutputStream());
+            try (OutputStream stderr = execution.stdErr().orElse(OutputStream.nullOutputStream())) {
                 p.getErrorStream().transferTo(stderr);
                 stderr.flush();
             } catch (IOException e) {
@@ -103,10 +115,10 @@ public final class ProcessBuilderExecutor {
             }
         });
         stderrPump.setName("stderr" + suffix);
+        stderrPump.setDaemon(true);
         stderrPump.start();
         Thread stdinPump = new Thread(() -> {
-            try {
-                OutputStream in = p.getOutputStream();
+            try (OutputStream in = p.getOutputStream()) {
                 execution.stdIn().orElse(InputStream.nullInputStream()).transferTo(in);
                 in.flush();
             } catch (IOException e) {
@@ -116,6 +128,7 @@ public final class ProcessBuilderExecutor {
             }
         });
         stdinPump.setName("stdin" + suffix);
+        stdinPump.setDaemon(true);
         stdinPump.start();
         return latch;
     }

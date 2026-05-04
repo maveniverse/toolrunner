@@ -61,4 +61,9 @@ public interface ToolContext {
      * Creates MIMA context. Caller must make sure created context is closed.
      */
     Context createMimaContext();
+
+    /**
+     * The timeout in milliseconds, that tool has allowed to run.
+     */
+    long toolTimeout();
 }

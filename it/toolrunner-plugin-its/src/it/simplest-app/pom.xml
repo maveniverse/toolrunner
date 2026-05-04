@@ -74,12 +74,18 @@
                             <toolName>jdk</toolName>
                             <command>jpackage</command>
                             <arguments>
-                                <argument>--input ${project.build.directory}/lib</argument>
-                                <argument>--name ${project.artifactId}</argument>
-                                <argument>--main-jar ${project.artifactId}-${project.version}.jar</argument>
-                                <argument>--main-class org.maveniverse.maven.toolrunner.it.simplest.Example</argument>
-                                <argument>--type ${packageType}</argument>
-                                <argument>--dest ${project.build.directory}/app</argument>
+                                <argument>--input</argument>
+                                <argument>${project.build.directory}/lib</argument>
+                                <argument>--name</argument>
+                                <argument>${project.artifactId}</argument>
+                                <argument>--main-jar</argument>
+                                <argument>${project.artifactId}-${project.version}.jar</argument>
+                                <argument>--main-class</argument>
+                                <argument>org.maveniverse.maven.toolrunner.it.simplest.Example</argument>
+                                <argument>--type</argument>
+                                <argument>${packageType}</argument>
+                                <argument>--dest</argument>
+                                <argument>${project.build.directory}/app</argument>
                             </arguments>
                         </configuration>
                     </execution>

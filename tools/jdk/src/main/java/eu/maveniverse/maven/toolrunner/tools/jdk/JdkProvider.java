@@ -88,6 +88,6 @@ public class JdkProvider implements ToolProvider, ToolDetector, ToolExecutor {
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution);
+        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
     }
 }

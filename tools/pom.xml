@@ -25,5 +25,6 @@
 
   <modules>
     <module>jbang</module>
+    <module>maven</module>
   </modules>
 </project>

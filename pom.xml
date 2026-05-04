@@ -93,6 +93,11 @@
         <artifactId>jbang</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+        <artifactId>maven</artifactId>
+        <version>${project.version}</version>
+      </dependency>
 
       <dependency>
         <groupId>eu.maveniverse.maven.shared</groupId>

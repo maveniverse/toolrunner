@@ -31,6 +31,10 @@
       <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
       <artifactId>jbang</artifactId>
     </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+      <artifactId>maven</artifactId>
+    </dependency>
   </dependencies>
 
   <profiles>

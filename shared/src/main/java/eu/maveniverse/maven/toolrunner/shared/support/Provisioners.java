@@ -30,10 +30,16 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HTTP;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.VersionRequest;
+import org.eclipse.aether.resolution.VersionResolutionException;
+import org.eclipse.aether.resolution.VersionResult;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
 
 /**
@@ -45,30 +51,43 @@ public final class Provisioners {
     private static final String TOOLRUNNER_METADATA = "toolrunner-metadata.properties";
 
     /**
+     * Special version, to be used when "latest" is needed to be resolved with {@link #resolveArtifact(ToolContext, String)}.
+     */
+    public static final String RELEASE_VERSION = "RELEASE";
+
+    /**
      * Resolves a single artifact, and returns the backing file of it. If artifact was not found, returns empty optional.
      * If anything else than "successful" or "not-found" outcome happens, exception is thrown.
+     * Supports only {@link #RELEASE_VERSION}, but no ranges and all the fluff.
      *
      * @param toolContext The tool context, must not be {@code null}.
-     * @param artifact The GAV in form of {@code <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>}, must not be {@code null}.
+     * @param gav The GAV in form of {@code <groupId>:<artifactId>[:<extension>[:<classifier>]]:<version>}, must not be {@code null}.
+     * @return resolved {@link Artifact}, or empty optional, if "not-found".
      */
-    public static Optional<Path> resolveArtifact(ToolContext toolContext, String artifact) throws IOException {
+    public static Optional<Artifact> resolveArtifact(ToolContext toolContext, String gav) throws IOException {
         requireNonNull(toolContext);
-        requireNonNull(artifact);
+        requireNonNull(gav);
         try (Context context = toolContext.createMimaContext()) {
+            RepositorySystem repositorySystem = context.repositorySystem();
+            RepositorySystemSession session = context.repositorySystemSession();
             try {
-                return Optional.of(context.repositorySystem()
+                DefaultArtifact artifact = new DefaultArtifact(gav);
+                if (RELEASE_VERSION.equals(artifact.getVersion())) {
+                    VersionResult versionResult = repositorySystem.resolveVersion(
+                            session, new VersionRequest(artifact, context.remoteRepositories(), "toolrunner"));
+                    artifact.setVersion(versionResult.getVersion());
+                }
+                return Optional.of(repositorySystem
                         .resolveArtifact(
-                                context.repositorySystemSession(),
-                                new ArtifactRequest(
-                                        new DefaultArtifact(artifact), context.remoteRepositories(), "toolrunner"))
-                        .getArtifact()
-                        .getFile()
-                        .toPath());
+                                session, new ArtifactRequest(artifact, context.remoteRepositories(), "toolrunner"))
+                        .getArtifact());
+            } catch (VersionResolutionException e) {
+                throw new IOException("Unable to resolve artifact version " + gav, e);
             } catch (ArtifactResolutionException e) {
                 if (e.getResult().getExceptions().get(0) instanceof ArtifactNotFoundException) {
                     return Optional.empty();
                 }
-                throw new IOException(e);
+                throw new IOException("Unable to resolve artifact " + gav, e);
             }
         }
     }

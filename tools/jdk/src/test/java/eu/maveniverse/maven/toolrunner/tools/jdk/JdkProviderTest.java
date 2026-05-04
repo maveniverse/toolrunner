@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * https://www.eclipse.org/legal/epl-v20.html
  */
-package eu.maveniverse.maven.toolrunner.tools.isx;
+package eu.maveniverse.maven.toolrunner.tools.jdk;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,7 +14,6 @@ import eu.maveniverse.maven.toolrunner.shared.Config;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -22,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
-public class IsxProviderTest {
+public class JdkProviderTest {
     @Test
     void isolated() throws IOException {
         // transient = true (clean up after yourself)
@@ -33,25 +32,22 @@ public class IsxProviderTest {
                 .isTransient(true)
                 .allowPathDetection(false)
                 .build())) {
-            assertTrue(toolManager.supportedToolNames().contains(IsxProvider.NAME));
+            assertTrue(toolManager.supportedToolNames().contains(JdkProvider.NAME));
 
-            Optional<ToolHandler> maybeHandler = toolManager.selectToolByName("isx");
+            Optional<ToolHandler> maybeHandler = toolManager.selectToolByName("jdk");
             assertTrue(maybeHandler.isPresent());
 
             ToolHandler handler = maybeHandler.orElseThrow();
 
-            // detect isx, should find zero
+            // detect jdk, it is always supported, should find 1
             List<Map<String, String>> detected = handler.detectTool();
-            assertEquals(0, detected.size());
+            assertEquals(1, detected.size());
 
-            // provision latest isx
-            ToolHandle handle = handler.toolHandle();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            handle.execute(handle.executionTemplate()
-                    .argument("--version")
-                    .stdOut(baos)
-                    .build());
-            assertTrue(baos.toString().trim().contains(handle.toolMetadata().get(ToolHandler.TOOL_VERSION)));
+            // provision latest jdk; same as detected
+            Optional<ToolHandle> maybeHandle = handler.selectTool(detected.get(0));
+            assertTrue(maybeHandle.isPresent());
+            ToolHandle handle = maybeHandle.orElseThrow();
+            assertEquals(detected.get(0), handle.toolMetadata());
 
             // detect again, we should have one more provisioned
             detected = handler.detectTool();

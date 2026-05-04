@@ -26,7 +26,7 @@ public class MavenProviderTest {
     @Test
     void isolated() throws IOException {
         // transient = true (clean up after yourself)
-        // allowPathDetection = true (ignore user installed Maven versions)
+        // allowPathDetection = false (ignore user installed ones)
         try (ToolManager toolManager = ToolManager.create(Config.builder()
                 .installationDirectory(Path.of("target/installation-directory"))
                 .tempDirectory(Path.of("target/temp-directory"))

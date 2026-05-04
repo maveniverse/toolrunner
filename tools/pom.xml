@@ -26,6 +26,7 @@
   <modules>
     <module>isx</module>
     <module>jbang</module>
+    <module>jdk</module>
     <module>maven</module>
   </modules>
 </project>

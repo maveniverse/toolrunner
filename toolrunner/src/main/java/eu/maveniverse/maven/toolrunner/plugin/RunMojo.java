@@ -8,6 +8,7 @@
 package eu.maveniverse.maven.toolrunner.plugin;
 
 import eu.maveniverse.maven.toolrunner.shared.Config;
+import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
@@ -49,6 +50,9 @@ public class RunMojo extends AbstractMojo {
     @Parameter(property = "toolrunner.toolVersion")
     private String toolVersion;
 
+    @Parameter(property = "toolrunner.command")
+    private String command;
+
     @Parameter(property = "toolrunner.arguments", required = true)
     private String[] arguments;
 
@@ -73,11 +77,14 @@ public class RunMojo extends AbstractMojo {
                     ToolHandle handle = maybeHandle.orElseThrow();
                     ByteArrayOutputStream out = new ByteArrayOutputStream();
                     ByteArrayOutputStream err = new ByteArrayOutputStream();
-                    ToolHandle.Result result = handle.execute(handle.executionTemplate()
+                    ToolExecution.Builder execution = handle.executionTemplate()
                             .addArguments(arguments)
                             .stdOut(out)
-                            .stdErr(err)
-                            .build());
+                            .stdErr(err);
+                    if (command != null) {
+                        execution.command(command);
+                    }
+                    ToolHandle.Result result = handle.execute(execution.build());
                     if (result.success()) {
                         log.info(out.toString().trim());
                     } else {

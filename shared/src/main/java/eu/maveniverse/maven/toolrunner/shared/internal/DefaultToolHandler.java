@@ -56,10 +56,13 @@ public class DefaultToolHandler implements ToolHandler {
                 }
             }
             if (selected == null) {
-                return Optional.empty();
-            } else {
-                return Optional.of(new DefaultToolHandle(toolContext, selected, toolProvider.toolExecutor()));
+                if (detected.isEmpty()) {
+                    return Optional.empty();
+                } else {
+                    selected = detected.get(0);
+                }
             }
+            return Optional.of(new DefaultToolHandle(toolContext, selected, toolProvider.toolExecutor()));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

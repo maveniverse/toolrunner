@@ -38,6 +38,7 @@
     <module>shared</module>
     <module>tools</module>
     <module>toolrunner</module>
+    <module>extension</module>
     <module>it</module>
   </modules>
 

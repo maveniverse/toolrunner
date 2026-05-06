@@ -147,7 +147,7 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
             ToolHandle.Result result = executeTool(context, metadata, exe.build());
             if (result.success()) {
                 String[] versions = out.toString().trim().split("\\s");
-                String version = versions[3];
+                String version = versions[2];
                 return Optional.of(Map.of(
                         ToolHandler.TOOL_NAME,
                         GradleProvider.NAME,

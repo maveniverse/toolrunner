@@ -91,17 +91,27 @@
       </dependency>
       <dependency>
         <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+        <artifactId>ant</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+        <artifactId>gradle</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
         <artifactId>isx</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
-        <artifactId>jdk</artifactId>
+        <artifactId>jbang</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
-        <artifactId>jbang</artifactId>
+        <artifactId>jdk</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

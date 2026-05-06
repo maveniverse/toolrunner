@@ -29,6 +29,14 @@
     </dependency>
     <dependency>
       <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+      <artifactId>ant</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+      <artifactId>gradle</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
       <artifactId>isx</artifactId>
     </dependency>
     <dependency>

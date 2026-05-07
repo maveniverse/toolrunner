@@ -29,6 +29,7 @@
                         <phase>process-resources</phase>
                         <configuration>
                             <toolName>maven</toolName>
+                            <toolVersion>3.9.15</toolVersion>
                             <arguments>
                                 <argument>help:evaluate</argument>
                                 <argument>-q</argument>

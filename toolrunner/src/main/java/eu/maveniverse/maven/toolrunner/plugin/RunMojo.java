@@ -17,7 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -86,51 +85,41 @@ public class RunMojo extends MojoSupport {
                 .installationDirectory(installationDirectory != null ? installationDirectory.toPath() : null)
                 .tempDirectory(tempDirectory != null ? tempDirectory.toPath() : null)
                 .build())) {
-            Optional<ToolHandler> maybeHandler = toolManager.selectToolByName(toolName);
-            if (maybeHandler.isPresent()) {
-                ToolHandler handler = maybeHandler.orElseThrow();
+            ToolHandler handler = toolManager
+                    .selectToolByName(toolName)
+                    .orElseThrow(() -> new MojoExecutionException("Tool " + toolName + " not supported."));
+            ToolHandle handle;
+            if (toolVersion != null) {
                 HashMap<String, String> metadata = new HashMap<>();
                 metadata.put(ToolHandler.TOOL_NAME, toolName);
-                if (toolVersion != null) {
-                    metadata.put(ToolHandler.TOOL_VERSION, toolVersion);
-                }
-                Optional<ToolHandle> maybeHandle = handler.selectTool(metadata);
-                if (maybeHandle.isPresent()) {
-                    ToolHandle handle = maybeHandle.orElseThrow();
-                    ByteArrayOutputStream out = new ByteArrayOutputStream();
-                    ByteArrayOutputStream err = new ByteArrayOutputStream();
-                    ToolExecution.Builder execution = handle.executionTemplate()
-                            .addArguments(arguments)
-                            .cwd(mavenSession.getCurrentProject().getBasedir().toPath())
-                            .stdOut(out)
-                            .stdErr(err);
-                    if (command != null) {
-                        execution.command(command);
-                    }
-                    ToolHandle.Result result = handle.execute(execution.build());
-                    if (result.success()) {
-                        logger.info(out.toString().trim());
-                    } else {
-                        String stdout = out.toString().trim();
-                        String stderr = err.size() > 0 ? err.toString().trim() : null;
-                        if (stderr != null) {
-                            throw new MojoFailureException(
-                                    "Failed to execute tool: " + stdout + " (err: " + stderr + ")");
-                        } else {
-                            throw new MojoFailureException("Failed to execute tool: " + stdout);
-                        }
-                    }
-                } else {
-                    // provisioning support is optional; if tool not already present, and provisioner not present
-                    if (toolVersion != null) {
-                        throw new MojoFailureException(
-                                "Could not provision tool : " + toolName + " version " + toolVersion);
-                    } else {
-                        throw new MojoFailureException("Could not provision tool : " + toolName);
-                    }
-                }
+                metadata.put(ToolHandler.TOOL_VERSION, toolVersion);
+                handle = handler.selectTool(metadata)
+                        .orElseThrow(() -> new MojoFailureException(
+                                "Could not provision tool : " + toolName + " version " + toolVersion));
             } else {
-                throw new MojoFailureException("Unsupported tool: " + toolName);
+                handle = handler.toolHandle();
+            }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            ByteArrayOutputStream err = new ByteArrayOutputStream();
+            ToolExecution.Builder execution = handle.executionTemplate()
+                    .addArguments(arguments)
+                    .cwd(mavenSession.getCurrentProject().getBasedir().toPath())
+                    .stdOut(out)
+                    .stdErr(err);
+            if (command != null) {
+                execution.command(command);
+            }
+            ToolHandle.Result result = handle.execute(execution.build());
+            if (result.success()) {
+                logger.info(out.toString().trim());
+            } else {
+                String stdout = out.toString().trim();
+                String stderr = err.size() > 0 ? err.toString().trim() : null;
+                if (stderr != null) {
+                    throw new MojoFailureException("Failed to execute tool: " + stdout + " (err: " + stderr + ")");
+                } else {
+                    throw new MojoFailureException("Failed to execute tool: " + stdout);
+                }
             }
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);

@@ -70,6 +70,7 @@ public class DefaultToolHandler implements ToolHandler {
 
     @Override
     public ToolHandle toolHandle() {
-        return selectTool(Map.of()).orElseThrow();
+        return selectTool(Map.of())
+                .orElseThrow(() -> new IllegalStateException("No Tool detected nor could be provisioned"));
     }
 }

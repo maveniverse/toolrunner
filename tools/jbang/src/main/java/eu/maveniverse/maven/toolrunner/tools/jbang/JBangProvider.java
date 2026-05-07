@@ -87,7 +87,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
                     OSTools.dereference(OSTools.which(JBangProvider.EXE_NAME).orElse(Set.of()));
             // consider only those ending with `bin/$EXE_NAME`
             for (Path executable : paths) {
-                if (executable.toString().replace("\\", "/").endsWith("/bin/" + JBangProvider.EXE_NAME)) {
+                if (executable.toString().replace('\\', '/').endsWith("/bin/" + JBangProvider.EXE_NAME)) {
                     tryHome(context, executable.getParent().getParent()).ifPresent(detected::add);
                 }
             }
@@ -203,11 +203,13 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     @Override
     public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
         ToolExecution.Builder builder;
-        String jbangHome = metadata.get(JBangProvider.HOME);
-        if (jbangHome != null) {
-            builder = ToolExecution.ofCommand(
-                    Path.of(jbangHome).resolve("bin/" + JBangProvider.EXE_NAME).toString());
-            builder.environmentVariable(ENV_HOME, jbangHome);
+        String jBangHome = metadata.get(JBangProvider.HOME);
+        if (jBangHome != null) {
+            builder = ToolExecution.ofCommand(Path.of(jBangHome)
+                    .resolve("bin")
+                    .resolve(JBangProvider.EXE_NAME)
+                    .toString());
+            builder.environmentVariable(ENV_HOME, jBangHome);
         } else {
             builder = ToolExecution.ofCommand(JBangProvider.EXE_NAME);
         }

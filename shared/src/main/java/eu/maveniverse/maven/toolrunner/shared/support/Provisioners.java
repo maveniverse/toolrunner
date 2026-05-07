@@ -175,15 +175,16 @@ public final class Provisioners {
         if (!Files.isDirectory(toolHome)) {
             throw new IllegalArgumentException("Tool home is not a directory");
         }
-        LOGGER.debug("loadMetadata from {}", toolHome);
         Path metadataPath = toolHome.resolve(TOOLRUNNER_METADATA);
         if (Files.isRegularFile(metadataPath)) {
             try (InputStream in = Files.newInputStream(metadataPath)) {
                 Properties props = new Properties();
                 props.load(in);
+                LOGGER.debug("loadMetadata from {} loaded {}", toolHome, props);
                 return Optional.of(MavenUtils.toMap(props));
             }
         }
+        LOGGER.debug("loadMetadata from {} found nothing", toolHome);
         return Optional.empty();
     }
 

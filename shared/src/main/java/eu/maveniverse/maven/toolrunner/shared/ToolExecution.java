@@ -268,6 +268,18 @@ public interface ToolExecution {
             public Optional<OutputStream> stdErr() {
                 return Optional.ofNullable(stdErr);
             }
+
+            @Override
+            public String toString() {
+                return getClass().getSimpleName() + "{" + "command='"
+                        + command + '\'' + ", arguments="
+                        + arguments + ", cwd="
+                        + cwd + ", environmentVariables="
+                        + environmentVariables + ", stdIn="
+                        + stdIn + ", stdOut="
+                        + stdOut + ", stdErr="
+                        + stdErr + '}';
+            }
         }
     }
 }

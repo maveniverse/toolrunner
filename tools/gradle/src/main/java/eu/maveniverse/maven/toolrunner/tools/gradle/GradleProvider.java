@@ -214,7 +214,7 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
         String home = metadata.get(GradleProvider.HOME);
         if (home != null) {
             builder = ToolExecution.ofCommand(
-                    Paths.get(home).resolve("bin/" + GradleProvider.EXE_NAME).toString());
+                    Paths.get(home).resolve("bin").resolve(GradleProvider.EXE_NAME).toString());
             builder.environmentVariable(ENV_HOME, home);
         } else {
             builder = ToolExecution.ofCommand(GradleProvider.EXE_NAME);

@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
+import javax.inject.Inject;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -82,6 +84,9 @@ public class RunMojo extends AbstractMojo {
     @Parameter(property = "toolrunner.arguments", required = true)
     private String[] arguments;
 
+    @Inject
+    private MavenSession session;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         try (ToolManager toolManager = ToolManager.create(Config.builder()
@@ -105,6 +110,7 @@ public class RunMojo extends AbstractMojo {
                     ByteArrayOutputStream err = new ByteArrayOutputStream();
                     ToolExecution.Builder execution = handle.executionTemplate()
                             .addArguments(arguments)
+                            .cwd(session.getCurrentProject().getBasedir().toPath())
                             .stdOut(out)
                             .stdErr(err);
                     if (command != null) {

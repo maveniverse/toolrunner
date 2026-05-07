@@ -21,9 +21,14 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -104,7 +109,6 @@ public final class Provisioners {
      */
     public static FileUtils.TempFile httpGet(ToolContext toolContext, String serverId, URI resourceUri)
             throws IOException {
-        LOGGER.debug("HTTP GET from {}", resourceUri.toASCIIString());
         try (Context context = toolContext.createMimaContext()) {
             HttpClientBuilder builder = new MavenHttpClient4Factory(context)
                     .createResolutionClient(
@@ -122,6 +126,7 @@ public final class Provisioners {
                         try (OutputStream out = Files.newOutputStream(result.getPath())) {
                             entity.writeTo(out);
                         }
+                        LOGGER.debug("HTTP GET from {} to {}", resourceUri.toASCIIString(), result.getPath());
                         return result;
                     } else {
                         throw new IOException("Unable to download file from " + resourceUri);
@@ -167,6 +172,24 @@ public final class Provisioners {
         }
         Files.createDirectories(target);
         UnArchiver.builder().useRoot(useRoot).build().unarchive(source.toFile(), target.toFile());
+        LOGGER.debug("Unpack (useRoot={}) from {} to {}", useRoot, source, target);
+        tree(target, 0, (p, d) -> {
+            String prefix = IntStream.range(0, d).mapToObj(i -> " ").collect(Collectors.joining(""));
+            LOGGER.debug("{} {} {}", prefix, Files.isDirectory(p) ? "+" : "-", p.getFileName());
+        });
+    }
+
+    private static void tree(Path directory, int depth, BiConsumer<Path, Integer> consumer) throws IOException {
+        ArrayList<Path> entries = new ArrayList<>();
+        try (Stream<Path> stream = Files.list(directory)) {
+            stream.forEach(entries::add);
+        }
+        for (Path entry : entries) {
+            consumer.accept(entry, depth);
+            if (Files.isDirectory(entry)) {
+                tree(entry, depth + 1, consumer);
+            }
+        }
     }
 
     public static Optional<Map<String, String>> loadMetadata(ToolContext toolContext, Path toolHome)

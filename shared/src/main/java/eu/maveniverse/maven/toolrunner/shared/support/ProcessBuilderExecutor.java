@@ -20,7 +20,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,11 +69,10 @@ public final class ProcessBuilderExecutor {
             command.add("sh");
             command.add("-c");
         }
-        command.add("\""
-                + Stream.concat(Stream.of(execution.command()), execution.arguments().stream())
-                        .map(s -> s.replace("\"", "\\\""))
-                        .collect(Collectors.joining("\" \""))
-                + "\"");
+        command.add(mayQuoteAndEscape(execution.command()) + " "
+                + execution.arguments().stream()
+                        .map(ProcessBuilderExecutor::mayQuoteAndEscape)
+                        .collect(Collectors.joining(" ")));
 
         ProcessBuilder pb =
                 new ProcessBuilder().command(command).directory(execution.cwd().toFile());
@@ -85,7 +83,11 @@ public final class ProcessBuilderExecutor {
         try {
             if (pump(process, execution).await(timeoutMillis, TimeUnit.MILLISECONDS)) {
                 int exitCode = process.waitFor();
-                LOGGER.debug("Executing process builder command: {}; exitCode={}", execution, exitCode);
+                LOGGER.debug(
+                        "Executing process builder execution: {}; command: {}; exitCode={}",
+                        execution,
+                        command,
+                        exitCode);
                 return new ProcessBuilderToolExecutorResult(exitCode);
             } else {
                 process.destroyForcibly();
@@ -95,6 +97,17 @@ public final class ProcessBuilderExecutor {
             process.destroyForcibly();
             throw e;
         }
+    }
+
+    private static String mayQuoteAndEscape(String command) {
+        if (command.contains(" ")) {
+            if (command.contains("\"")) {
+                return "\"" + command.replace("\"", "\\\"") + "\"";
+            } else {
+                return "\"" + command + "\"";
+            }
+        }
+        return command;
     }
 
     /**

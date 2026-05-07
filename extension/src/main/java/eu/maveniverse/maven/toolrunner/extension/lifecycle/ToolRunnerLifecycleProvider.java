@@ -25,39 +25,17 @@ import javax.inject.Singleton;
  * The tool lifecycle provider.
  */
 @Singleton
-@Named(ToolLifecycleProvider.NAME)
-public class ToolLifecycleProvider extends AbstractLifecycleProvider {
-    public static final String NAME = "tool";
+@Named(ToolRunnerLifecycleProvider.NAME)
+public class ToolRunnerLifecycleProvider extends AbstractLifecycleProvider {
+    public static final String NAME = "toolrunner";
 
     private static final String[] PHASES = {
-        "validate",
-        "initialize",
-        "generate-sources",
-        "process-sources",
-        "generate-resources",
-        "process-resources",
-        "compile",
-        "process-classes",
-        "generate-test-sources",
-        "process-test-sources",
-        "generate-test-resources",
-        "process-test-resources",
-        "test-compile",
-        "process-test-classes",
-        "test",
-        "prepare-package",
-        "package",
-        "pre-integration-test",
-        "integration-test",
-        "post-integration-test",
-        "verify",
-        "install",
-        "deploy"
+        "tool-validate", "tool-initialize", "tool-run", "tool-install", "tool-deploy"
     };
 
     private static final String[] PLUGIN_BINDINGS = {};
 
-    public ToolLifecycleProvider() {
+    public ToolRunnerLifecycleProvider() {
         super(NAME, PHASES, PLUGIN_BINDINGS);
     }
 }

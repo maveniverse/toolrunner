@@ -69,6 +69,7 @@
     <maven.compiler.release>17</maven.compiler.release>
 
     <!-- Dependency versions -->
+    <version.shared>0.2.3</version.shared>
     <version.mima>2.4.43</version.mima>
     <version.maven>3.9.15</version.maven>
     <version.resolver>1.9.27</version.resolver>
@@ -82,6 +83,11 @@
       <dependency>
         <groupId>eu.maveniverse.maven.toolrunner</groupId>
         <artifactId>shared</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.toolrunner</groupId>
+        <artifactId>extension</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -123,7 +129,12 @@
       <dependency>
         <groupId>eu.maveniverse.maven.shared</groupId>
         <artifactId>core</artifactId>
-        <version>0.2.2</version>
+        <version>${version.shared}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.shared</groupId>
+        <artifactId>plugin</artifactId>
+        <version>${version.shared}</version>
       </dependency>
 
       <!-- Logging (except API, runtime only) -->

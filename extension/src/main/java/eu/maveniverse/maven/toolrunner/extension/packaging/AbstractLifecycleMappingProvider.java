@@ -39,8 +39,8 @@ public abstract class AbstractLifecycleMappingProvider implements Provider<Lifec
         requireNonNull(lifecycleId);
         requireNonNull(pluginBindings);
         final int len = pluginBindings.length;
-        if (len < 2 || len % 2 != 0) {
-            throw new IllegalArgumentException("Plugin bindings must have more than 0, even count of elements");
+        if (len % 2 != 0) {
+            throw new IllegalArgumentException("Plugin bindings must have even count of elements");
         }
         HashMap<String, LifecyclePhase> lifecyclePhaseBindings = new HashMap<>(len / 2);
         for (int i = 0; i < len; i = i + 2) {

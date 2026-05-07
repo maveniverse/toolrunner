@@ -28,6 +28,10 @@
       <artifactId>toolrunner</artifactId>
     </dependency>
     <dependency>
+      <groupId>eu.maveniverse.maven.toolrunner</groupId>
+      <artifactId>extension</artifactId>
+    </dependency>
+    <dependency>
       <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
       <artifactId>ant</artifactId>
     </dependency>

@@ -34,6 +34,11 @@
       <artifactId>shared</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>eu.maveniverse.maven.shared</groupId>
+      <artifactId>plugin</artifactId>
+    </dependency>
+
     <!-- MIMA + Logging -->
     <dependency>
       <groupId>org.slf4j</groupId>

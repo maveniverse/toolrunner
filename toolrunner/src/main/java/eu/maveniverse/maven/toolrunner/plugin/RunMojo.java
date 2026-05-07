@@ -7,6 +7,7 @@
  */
 package eu.maveniverse.maven.toolrunner.plugin;
 
+import eu.maveniverse.maven.shared.plugin.MojoSupport;
 import eu.maveniverse.maven.toolrunner.shared.Config;
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
@@ -17,23 +18,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
-import javax.inject.Inject;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Runs the selected tool.
  */
 @Mojo(name = "run", threadSafe = true)
-public class RunMojo extends AbstractMojo {
-    private final Logger log = LoggerFactory.getLogger(this.getClass());
-
+public class RunMojo extends MojoSupport {
     /**
      * Optional: whether tool manager along with installation directory should be considered "transient" or not.
      * In case of transient, the tools that are provisioned are deleted upon manager is being closed.
@@ -84,11 +78,8 @@ public class RunMojo extends AbstractMojo {
     @Parameter(property = "toolrunner.arguments", required = true)
     private String[] arguments;
 
-    @Inject
-    private MavenSession session;
-
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
+    public void executeMojo() throws MojoExecutionException, MojoFailureException {
         try (ToolManager toolManager = ToolManager.create(Config.builder()
                 .isTransient(isTransient)
                 .allowPathDetection(allowPathDetection)
@@ -110,7 +101,7 @@ public class RunMojo extends AbstractMojo {
                     ByteArrayOutputStream err = new ByteArrayOutputStream();
                     ToolExecution.Builder execution = handle.executionTemplate()
                             .addArguments(arguments)
-                            .cwd(session.getCurrentProject().getBasedir().toPath())
+                            .cwd(mavenSession.getCurrentProject().getBasedir().toPath())
                             .stdOut(out)
                             .stdErr(err);
                     if (command != null) {
@@ -118,7 +109,7 @@ public class RunMojo extends AbstractMojo {
                     }
                     ToolHandle.Result result = handle.execute(execution.build());
                     if (result.success()) {
-                        log.info(out.toString().trim());
+                        logger.info(out.toString().trim());
                     } else {
                         String stdout = out.toString().trim();
                         String stderr = err.size() > 0 ? err.toString().trim() : null;
@@ -144,5 +135,10 @@ public class RunMojo extends AbstractMojo {
         } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    protected String skipPrefix() {
+        return "toolrunner";
     }
 }

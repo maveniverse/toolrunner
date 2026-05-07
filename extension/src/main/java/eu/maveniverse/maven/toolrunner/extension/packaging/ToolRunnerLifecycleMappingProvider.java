@@ -33,13 +33,13 @@ public final class ToolRunnerLifecycleMappingProvider extends AbstractLifecycleM
     // START SNIPPET: blank
     private static final String[] BINDINGS = {
         "tool-run",
-        "eu.maveniverse.maven.plugins:toolrunner:"
+        "eu.maveniverse.maven.plugins:toolrunner"
                 + MavenUtils.discoverArtifactVersionWithPostOperator(
                         ToolRunnerLifecycleMappingProvider.class.getClassLoader(),
                         "eu.maveniverse.maven.toolrunner",
                         "extension",
                         s -> {
-                            if (s == null) {
+                            if (s == null || s.trim().isEmpty()) {
                                 return "";
                             } else {
                                 return ":" + s;

@@ -22,7 +22,21 @@
                 <version>@project.version@</version>
                 <executions>
                     <execution>
-                        <id>hello-world</id>
+                        <id>tool-compile</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <toolName>jdk</toolName>
+                            <command>javac</command>
+                            <arguments>
+                                <argument>hello.java</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>tool-run</id>
                         <goals>
                             <goal>run</goal>
                         </goals>
@@ -31,7 +45,8 @@
                             <toolName>jdk</toolName>
                             <command>java</command>
                             <arguments>
-                                <argument>hello.java</argument>
+                                <argument>-cp</argument>
+                                <argument>.</argument>
                                 <argument>--option1=foo</argument>
                             </arguments>
                         </configuration>

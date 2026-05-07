@@ -47,6 +47,7 @@
                             <arguments>
                                 <argument>-cp</argument>
                                 <argument>.</argument>
+                                <argument>hello</argument>
                                 <argument>--option1=foo</argument>
                             </arguments>
                         </configuration>

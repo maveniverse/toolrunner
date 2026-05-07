@@ -152,7 +152,7 @@ public interface ToolExecution {
         }
 
         public Builder argument(String argument) {
-            return addArguments(List.of(argument));
+            return addArguments(Collections.singletonList(argument));
         }
 
         public Builder addArguments(String... arguments) {

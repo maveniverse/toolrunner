@@ -16,9 +16,10 @@ import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -28,8 +29,8 @@ public class JBangProviderTest {
         // transient = true (clean up after yourself)
         // allowPathDetection = false (ignore user installed ones)
         try (ToolManager toolManager = ToolManager.create(Config.builder()
-                .installationDirectory(Path.of("target/installation-directory"))
-                .tempDirectory(Path.of("target/temp-directory"))
+                .installationDirectory(Paths.get("target/installation-directory"))
+                .tempDirectory(Paths.get("target/temp-directory"))
                 .isTransient(true)
                 .allowPathDetection(false)
                 .build())) {
@@ -38,7 +39,7 @@ public class JBangProviderTest {
             Optional<ToolHandler> maybeHandler = toolManager.selectToolByName("jbang");
             assertTrue(maybeHandler.isPresent());
 
-            ToolHandler handler = maybeHandler.orElseThrow();
+            ToolHandler handler = maybeHandler.orElseThrow(() -> new NoSuchElementException("No value present"));
 
             // detect JBang, should find zero
             List<Map<String, String>> detected = handler.detectTool();

@@ -16,7 +16,9 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvisioner;
 import eu.maveniverse.maven.toolrunner.shared.support.ProcessBuilderExecutor;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,10 +62,11 @@ public class JdkProvider implements ToolProvider, ToolDetector, ToolExecutor {
 
     @Override
     public List<Map<String, String>> detectTool(ToolContext context) {
-        return List.of(Map.of(
-                ToolHandler.TOOL_NAME, NAME,
-                ToolHandler.TOOL_VERSION, System.getProperty("java.version"),
-                JdkProvider.HOME, System.getProperty("java.home")));
+        HashMap<String, String> thisJdk = new HashMap<>();
+        thisJdk.put(ToolHandler.TOOL_NAME, NAME);
+        thisJdk.put(ToolHandler.TOOL_VERSION, System.getProperty("java.version"));
+        thisJdk.put(JdkProvider.HOME, System.getProperty("java.home"));
+        return Collections.singletonList(thisJdk);
     }
 
     // ToolExecutor
@@ -73,8 +76,9 @@ public class JdkProvider implements ToolProvider, ToolDetector, ToolExecutor {
         ToolExecution.Builder builder;
         String javaHome = metadata.get(JdkProvider.HOME);
         if (javaHome != null) {
-            builder = ToolExecution.ofCommand(Path.of(javaHome)
-                            .resolve("bin/" + JdkProvider.EXE_NAME)
+            builder = ToolExecution.ofCommand(Paths.get(javaHome)
+                            .resolve("bin")
+                            .resolve(JdkProvider.EXE_NAME)
                             .toString())
                     .environmentVariable(ENV_HOME, javaHome);
         } else {

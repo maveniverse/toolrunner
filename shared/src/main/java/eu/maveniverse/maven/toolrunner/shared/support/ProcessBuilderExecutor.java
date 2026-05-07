@@ -11,11 +11,11 @@ import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -90,10 +90,10 @@ public final class ProcessBuilderExecutor {
      */
     public static CountDownLatch pump(Process p, ToolExecution execution) {
         CountDownLatch latch = new CountDownLatch(3);
-        String suffix = "-pump-" + p.pid();
+        String suffix = "-pump-" + ThreadLocalRandom.current().nextInt();
         Thread stdoutPump = new Thread(() -> {
-            try (OutputStream stdout = execution.stdOut().orElse(OutputStream.nullOutputStream())) {
-                p.getInputStream().transferTo(stdout);
+            try (OutputStream stdout = execution.stdOut().orElse(IOTools.nullOutputStream())) {
+                IOTools.transferTo(p.getInputStream(), stdout);
                 stdout.flush();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -105,8 +105,8 @@ public final class ProcessBuilderExecutor {
         stdoutPump.setDaemon(true);
         stdoutPump.start();
         Thread stderrPump = new Thread(() -> {
-            try (OutputStream stderr = execution.stdErr().orElse(OutputStream.nullOutputStream())) {
-                p.getErrorStream().transferTo(stderr);
+            try (OutputStream stderr = execution.stdErr().orElse(IOTools.nullOutputStream())) {
+                IOTools.transferTo(p.getErrorStream(), stderr);
                 stderr.flush();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
@@ -119,7 +119,7 @@ public final class ProcessBuilderExecutor {
         stderrPump.start();
         Thread stdinPump = new Thread(() -> {
             try (OutputStream in = p.getOutputStream()) {
-                execution.stdIn().orElse(InputStream.nullInputStream()).transferTo(in);
+                IOTools.transferTo(execution.stdIn().orElse(IOTools.nullInputStream()), in);
                 in.flush();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);

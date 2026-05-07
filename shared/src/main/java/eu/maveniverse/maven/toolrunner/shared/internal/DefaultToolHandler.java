@@ -15,8 +15,10 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolContext;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public class DefaultToolHandler implements ToolHandler {
@@ -49,10 +51,12 @@ public class DefaultToolHandler implements ToolHandler {
                 }
             }
             if (selected == null && toolProvider.toolProvisioner().isPresent()) {
-                Optional<Map<String, String>> provisioned =
-                        toolProvider.toolProvisioner().orElseThrow().provisionTool(toolContext, metadata);
+                Optional<Map<String, String>> provisioned = toolProvider
+                        .toolProvisioner()
+                        .orElseThrow(() -> new NoSuchElementException("No value present"))
+                        .provisionTool(toolContext, metadata);
                 if (provisioned.isPresent()) {
-                    selected = provisioned.orElseThrow();
+                    selected = provisioned.orElseThrow(() -> new NoSuchElementException("No value present"));
                 }
             }
             if (selected == null) {
@@ -70,7 +74,7 @@ public class DefaultToolHandler implements ToolHandler {
 
     @Override
     public ToolHandle toolHandle() {
-        return selectTool(Map.of())
+        return selectTool(Collections.emptyMap())
                 .orElseThrow(() -> new IllegalStateException("No Tool detected nor could be provisioned"));
     }
 }

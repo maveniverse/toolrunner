@@ -15,9 +15,10 @@ import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
@@ -27,8 +28,8 @@ public class JdkProviderTest {
         // transient = true (clean up after yourself)
         // allowPathDetection = false (ignore user installed ones)
         try (ToolManager toolManager = ToolManager.create(Config.builder()
-                .installationDirectory(Path.of("target/installation-directory"))
-                .tempDirectory(Path.of("target/temp-directory"))
+                .installationDirectory(Paths.get("target/installation-directory"))
+                .tempDirectory(Paths.get("target/temp-directory"))
                 .isTransient(true)
                 .allowPathDetection(false)
                 .build())) {
@@ -37,7 +38,7 @@ public class JdkProviderTest {
             Optional<ToolHandler> maybeHandler = toolManager.selectToolByName("jdk");
             assertTrue(maybeHandler.isPresent());
 
-            ToolHandler handler = maybeHandler.orElseThrow();
+            ToolHandler handler = maybeHandler.orElseThrow(() -> new NoSuchElementException("No value present"));
 
             // detect jdk, it is always supported, should find 1
             List<Map<String, String>> detected = handler.detectTool();
@@ -46,7 +47,7 @@ public class JdkProviderTest {
             // provision latest jdk; same as detected
             Optional<ToolHandle> maybeHandle = handler.selectTool(detected.get(0));
             assertTrue(maybeHandle.isPresent());
-            ToolHandle handle = maybeHandle.orElseThrow();
+            ToolHandle handle = maybeHandle.orElseThrow(() -> new NoSuchElementException("No value present"));
             assertEquals(detected.get(0), handle.toolMetadata());
 
             // detect again, we should have one more provisioned

@@ -18,6 +18,7 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolDetector;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolExecutor;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvisioner;
+import eu.maveniverse.maven.toolrunner.shared.support.IOTools;
 import eu.maveniverse.maven.toolrunner.shared.support.OSTools;
 import eu.maveniverse.maven.toolrunner.shared.support.ProcessBuilderExecutor;
 import eu.maveniverse.maven.toolrunner.shared.support.Provisioners;
@@ -26,11 +27,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -73,7 +77,7 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
     @Override
     public List<Map<String, String>> detectTool(ToolContext context) throws IOException {
         if (!System.getProperty("os.name").toLowerCase().contains("linux")) {
-            return List.of();
+            return Collections.emptyList();
         }
 
         ArrayList<Map<String, String>> detected = new ArrayList<>();
@@ -81,7 +85,7 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         // detect from path; if allowed
         if (context.allowPathDetection()) {
             Set<Path> paths =
-                    OSTools.dereference(OSTools.which(IsxProvider.EXE_NAME).orElse(Set.of()));
+                    IOTools.dereference(OSTools.which(IsxProvider.EXE_NAME).orElse(Collections.emptySet()));
             // consider only those ending with `bin/$EXE_NAME`
             for (Path executable : paths) {
                 if (executable.toString().replace("\\", "/").endsWith("/bin/" + IsxProvider.EXE_NAME)) {
@@ -103,23 +107,24 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
             });
         }
 
-        return List.copyOf(detected);
+        return Collections.unmodifiableList(detected);
     }
 
     /**
      * Collects basic information about discovered JBang home.
      */
-    protected Optional<Map<String, String>> tryHome(ToolContext context, Path isxHome) throws IOException {
+    protected Optional<Map<String, String>> tryHome(ToolContext context, Path home) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Optional<Map<String, String>> maybeExisting = Provisioners.loadMetadata(context, isxHome);
+        Optional<Map<String, String>> maybeExisting = Provisioners.loadMetadata(context, home);
         if (maybeExisting.isPresent()) {
             return maybeExisting;
         }
 
         // execute and discover information
-        Map<String, String> metadata = new HashMap<>(Map.of(IsxProvider.HOME, isxHome.toString()));
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put(IsxProvider.HOME, home.toString());
         ToolExecution.Builder exe = executionTemplate(context, metadata)
                 .addArguments("--version")
                 .stdOut(out)
@@ -135,13 +140,11 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
             if (result.success()) {
                 String[] versions = out.toString().trim().split(" ");
                 String version = versions[1];
-                return Optional.of(Map.of(
-                        ToolHandler.TOOL_NAME,
-                        IsxProvider.NAME,
-                        ToolHandler.TOOL_VERSION,
-                        version,
-                        IsxProvider.HOME,
-                        isxHome.toString()));
+                HashMap<String, String> md = new HashMap<>();
+                md.put(ToolHandler.TOOL_NAME, NAME);
+                md.put(ToolHandler.TOOL_VERSION, version);
+                md.put(IsxProvider.HOME, home.toString());
+                return Optional.of(md);
             }
             return Optional.empty();
         } catch (InterruptedException e) {
@@ -181,7 +184,8 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         if (installationSuccess) {
             Optional<Map<String, String>> provisioned = tryHome(context, installDir);
             if (provisioned.isPresent()) {
-                Map<String, String> provisionedMetadata = new HashMap<>(provisioned.orElseThrow());
+                Map<String, String> provisionedMetadata =
+                        new HashMap<>(provisioned.orElseThrow(() -> new NoSuchElementException("No value present")));
                 Path versionedInstallDir = context.installationDirectory()
                         .resolve(NAME + "-" + requireNonNull(provisionedMetadata.get(ToolHandler.TOOL_VERSION)));
                 Files.move(installDir, versionedInstallDir, StandardCopyOption.REPLACE_EXISTING);
@@ -199,10 +203,10 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
     @Override
     public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
         ToolExecution.Builder builder;
-        String isxHome = metadata.get(IsxProvider.HOME);
-        if (isxHome != null) {
+        String home = metadata.get(IsxProvider.HOME);
+        if (home != null) {
             builder = ToolExecution.ofCommand(
-                    Path.of(isxHome).resolve(IsxProvider.EXE_NAME).toString());
+                    Paths.get(home).resolve(IsxProvider.EXE_NAME).toString());
         } else {
             builder = ToolExecution.ofCommand(IsxProvider.EXE_NAME);
         }

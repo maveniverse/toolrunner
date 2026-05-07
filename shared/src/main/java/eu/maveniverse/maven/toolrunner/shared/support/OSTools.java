@@ -9,12 +9,13 @@ package eu.maveniverse.maven.toolrunner.shared.support;
 
 import static java.util.Objects.requireNonNull;
 
+import eu.maveniverse.maven.shared.core.fs.FileUtils;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -51,7 +52,7 @@ public final class OSTools {
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
                         String line = reader.readLine();
                         while (line != null) {
-                            paths.add(Path.of(line));
+                            paths.add(FileUtils.normalizePath(Paths.get(line)));
                             line = reader.readLine();
                         }
                     }
@@ -66,17 +67,11 @@ public final class OSTools {
 
     /**
      * Dereferences collection of paths, makes them real path and are returned only if resulting path exists.
+     *
+     * @deprecated Use {@link IOTools#dereference(Collection)} instead.
      */
+    @Deprecated
     public static Set<Path> dereference(Collection<Path> paths) throws IOException {
-        HashSet<Path> dereferenced = new HashSet<>();
-        for (Path path : paths) {
-            if (Files.exists(path)) {
-                path = path.toRealPath();
-                if (Files.exists(path)) {
-                    dereferenced.add(path);
-                }
-            }
-        }
-        return dereferenced;
+        return IOTools.dereference(paths);
     }
 }

@@ -15,6 +15,7 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolContext;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolExecutor;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.HashMap;
 import java.util.Map;
 
 public class DefaultToolHandle implements ToolHandle {
@@ -24,7 +25,7 @@ public class DefaultToolHandle implements ToolHandle {
 
     public DefaultToolHandle(ToolContext toolContext, Map<String, String> metadata, ToolExecutor toolExecutor) {
         this.toolContext = requireNonNull(toolContext);
-        this.metadata = Map.copyOf(metadata);
+        this.metadata = new HashMap<>(metadata);
         this.toolExecutor = requireNonNull(toolExecutor);
     }
 

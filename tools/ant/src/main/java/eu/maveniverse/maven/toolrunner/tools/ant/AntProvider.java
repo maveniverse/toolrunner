@@ -18,6 +18,7 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolDetector;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolExecutor;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvisioner;
+import eu.maveniverse.maven.toolrunner.shared.support.IOTools;
 import eu.maveniverse.maven.toolrunner.shared.support.OSTools;
 import eu.maveniverse.maven.toolrunner.shared.support.ProcessBuilderExecutor;
 import eu.maveniverse.maven.toolrunner.shared.support.Provisioners;
@@ -26,11 +27,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -80,7 +84,7 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         // detect from path; if allowed
         if (context.allowPathDetection()) {
             Set<Path> paths =
-                    OSTools.dereference(OSTools.which(AntProvider.EXE_NAME).orElse(Set.of()));
+                    IOTools.dereference(OSTools.which(AntProvider.EXE_NAME).orElse(Collections.emptySet()));
             // consider only those ending with `bin/$EXE_NAME`
             for (Path executable : paths) {
                 if (executable.toString().replace("\\", "/").endsWith("/bin/" + AntProvider.EXE_NAME)) {
@@ -102,23 +106,24 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
             });
         }
 
-        return List.copyOf(detected);
+        return Collections.unmodifiableList(detected);
     }
 
     /**
      * Collects basic information about discovered JBang home.
      */
-    protected Optional<Map<String, String>> tryHome(ToolContext context, Path jBangHome) throws IOException {
+    protected Optional<Map<String, String>> tryHome(ToolContext context, Path home) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         ByteArrayOutputStream err = new ByteArrayOutputStream();
 
-        Optional<Map<String, String>> maybeExisting = Provisioners.loadMetadata(context, jBangHome);
+        Optional<Map<String, String>> maybeExisting = Provisioners.loadMetadata(context, home);
         if (maybeExisting.isPresent()) {
             return maybeExisting;
         }
 
         // execute and discover information
-        Map<String, String> metadata = new HashMap<>(Map.of(AntProvider.HOME, jBangHome.toString()));
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put(AntProvider.HOME, home.toString());
         ToolExecution.Builder exe = executionTemplate(context, metadata)
                 .addArguments("-version")
                 .stdOut(out)
@@ -133,13 +138,11 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
             if (result.success()) {
                 String[] versions = out.toString().trim().split(" ");
                 String version = versions[3];
-                return Optional.of(Map.of(
-                        ToolHandler.TOOL_NAME,
-                        AntProvider.NAME,
-                        ToolHandler.TOOL_VERSION,
-                        version,
-                        AntProvider.HOME,
-                        jBangHome.toString()));
+                HashMap<String, String> md = new HashMap<>();
+                md.put(ToolHandler.TOOL_NAME, NAME);
+                md.put(ToolHandler.TOOL_VERSION, version);
+                md.put(AntProvider.HOME, home.toString());
+                return Optional.of(md);
             }
             return Optional.empty();
         } catch (InterruptedException e) {
@@ -173,7 +176,8 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         }
         Optional<Map<String, String>> provisioned = tryHome(context, installDir);
         if (provisioned.isPresent()) {
-            Map<String, String> provisionedMetadata = new HashMap<>(provisioned.orElseThrow());
+            Map<String, String> provisionedMetadata =
+                    new HashMap<>(provisioned.orElseThrow(() -> new NoSuchElementException("No value present")));
             if (version == null) {
                 Path versionedInstallDir = context.installationDirectory()
                         .resolve(NAME + "-" + requireNonNull(provisionedMetadata.get(ToolHandler.TOOL_VERSION)));
@@ -195,7 +199,7 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         String jbangHome = metadata.get(AntProvider.HOME);
         if (jbangHome != null) {
             builder = ToolExecution.ofCommand(
-                    Path.of(jbangHome).resolve("bin/" + AntProvider.EXE_NAME).toString());
+                    Paths.get(jbangHome).resolve("bin/" + AntProvider.EXE_NAME).toString());
             builder.environmentVariable(ENV_HOME, jbangHome);
         } else {
             builder = ToolExecution.ofCommand(AntProvider.EXE_NAME);

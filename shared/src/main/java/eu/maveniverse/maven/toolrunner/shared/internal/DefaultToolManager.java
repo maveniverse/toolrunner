@@ -22,7 +22,9 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -59,7 +61,7 @@ public class DefaultToolManager implements ToolManager, ToolContext {
                                 : FileUtils.discoverUserHomeDirectory().resolve(".toolrunner")));
         Files.createDirectories(this.installationDirectory);
         this.userAgent = config.userAgent().orElse("ToolRunner/" + this.toolRunnerVersion);
-        this.httpHeaders = config.httpHeaders().orElse(Map.of());
+        this.httpHeaders = config.httpHeaders().orElse(Collections.emptyMap());
         this.timeout = config.timeout().orElse(TimeUnit.HOURS.toMillis(1L));
 
         this.closed = new AtomicBoolean(false);
@@ -118,7 +120,7 @@ public class DefaultToolManager implements ToolManager, ToolContext {
 
     @Override
     public Set<String> supportedToolNames() {
-        return Set.copyOf(toolProviders.keySet());
+        return Collections.unmodifiableSet(new HashSet<>(toolProviders.keySet()));
     }
 
     @Override

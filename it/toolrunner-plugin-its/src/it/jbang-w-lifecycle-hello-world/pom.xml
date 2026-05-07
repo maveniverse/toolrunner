@@ -16,7 +16,6 @@
     <packaging>toolrunner</packaging>
 
     <build>
-        <defaultGoal>tool-run</defaultGoal>
         <plugins>
             <plugin>
                 <groupId>eu.maveniverse.maven.plugins</groupId>

@@ -19,21 +19,22 @@
 package eu.maveniverse.maven.toolrunner.extension.packaging;
 
 import eu.maveniverse.maven.shared.core.maven.MavenUtils;
+import eu.maveniverse.maven.toolrunner.extension.lifecycle.ToolRunnerLifecycleProvider;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 /**
- * {@code toolrunner} packaging provider for {@code default} lifecycle.
+ * {@code toolrunner-toolrunner} packaging provider for {@code toolrunner} lifecycle.
  */
-@Named("toolrunner")
+@Named("toolrunner-toolrunner")
 @Singleton
-public final class ToolRunnerLifecycleMappingProvider extends AbstractLifecycleMappingProvider {
+public final class CustomToolRunnerLifecycleMappingProvider extends AbstractLifecycleMappingProvider {
     // START SNIPPET: blank
     private static final String[] BINDINGS = {
-        "package",
+        "tool-run",
         "eu.maveniverse.maven.plugins:toolrunner"
                 + MavenUtils.discoverArtifactVersionWithPostOperator(
-                        ToolRunnerLifecycleMappingProvider.class.getClassLoader(),
+                        CustomToolRunnerLifecycleMappingProvider.class.getClassLoader(),
                         "eu.maveniverse.maven.toolrunner",
                         "extension",
                         s -> {
@@ -47,7 +48,7 @@ public final class ToolRunnerLifecycleMappingProvider extends AbstractLifecycleM
     };
     // END SNIPPET: blank
 
-    public ToolRunnerLifecycleMappingProvider() {
-        super(DEFAULT, BINDINGS);
+    public CustomToolRunnerLifecycleMappingProvider() {
+        super(ToolRunnerLifecycleProvider.NAME, BINDINGS);
     }
 }

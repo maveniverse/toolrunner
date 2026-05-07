@@ -198,8 +198,10 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         ToolExecution.Builder builder;
         String jbangHome = metadata.get(AntProvider.HOME);
         if (jbangHome != null) {
-            builder = ToolExecution.ofCommand(
-                    Paths.get(jbangHome).resolve("bin").resolve(AntProvider.EXE_NAME).toString());
+            builder = ToolExecution.ofCommand(Paths.get(jbangHome)
+                    .resolve("bin")
+                    .resolve(AntProvider.EXE_NAME)
+                    .toString());
             builder.environmentVariable(ENV_HOME, jbangHome);
         } else {
             builder = ToolExecution.ofCommand(AntProvider.EXE_NAME);

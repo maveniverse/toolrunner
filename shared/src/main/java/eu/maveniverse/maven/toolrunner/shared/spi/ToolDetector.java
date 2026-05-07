@@ -27,7 +27,8 @@ import java.util.Map;
  */
 public interface ToolDetector {
     /**
-     * Detects the tool, possibly multiple ones, present on system. Must never return {@code null}.
+     * Detects the tool, possibly multiple ones, present on system. Must never return {@code null}. If "any" tool
+     * is to be used, it will be always the first element of the detected list.
      */
     List<Map<String, String>> detectTool(ToolContext context) throws IOException;
 }

@@ -31,8 +31,11 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultToolManager implements ToolManager, ToolContext {
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final boolean isTransient;
     private final String toolRunnerVersion;
     private final boolean allowPathDetection;
@@ -70,6 +73,11 @@ public class DefaultToolManager implements ToolManager, ToolContext {
         ServiceLoader.load(ToolProvider.class).iterator().forEachRemaining(p -> {
             toolProviders.put(p.name(), p);
         });
+        log.debug(
+                "Created tool manager installationDir={}, tempDir={}, toolProviders={}",
+                installationDirectory,
+                tempDirectory,
+                toolProviders.keySet());
     }
 
     // ToolContext

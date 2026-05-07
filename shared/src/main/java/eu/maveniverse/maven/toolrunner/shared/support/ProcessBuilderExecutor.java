@@ -7,6 +7,8 @@
  */
 package eu.maveniverse.maven.toolrunner.shared.support;
 
+import static java.util.Objects.requireNonNull;
+
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
@@ -19,12 +21,16 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Reusable executor using {@link ProcessBuilder}.
  */
 public final class ProcessBuilderExecutor {
     private ProcessBuilderExecutor() {}
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessBuilderExecutor.class);
 
     /**
      * The result carrier.
@@ -51,6 +57,11 @@ public final class ProcessBuilderExecutor {
      */
     public static ProcessBuilderToolExecutorResult execute(ToolExecution execution, long timeoutMillis)
             throws IOException, InterruptedException {
+        requireNonNull(execution);
+        if (timeoutMillis <= 0) {
+            throw new IllegalArgumentException("Timeout must be greater than zero");
+        }
+        LOGGER.debug("Executing process builder command: {}", execution);
         // Adjust the process invocation to circumvent possible limited buffers
         ArrayList<String> command = new ArrayList<>();
         if (ToolProvider.IS_WINDOWS) {
@@ -88,7 +99,7 @@ public final class ProcessBuilderExecutor {
     /**
      * Pumps standard streams of sub-process to execution provided streams.
      */
-    public static CountDownLatch pump(Process p, ToolExecution execution) {
+    private static CountDownLatch pump(Process p, ToolExecution execution) {
         CountDownLatch latch = new CountDownLatch(3);
         String suffix = "-pump-" + ThreadLocalRandom.current().nextInt();
         Thread stdoutPump = new Thread(() -> {

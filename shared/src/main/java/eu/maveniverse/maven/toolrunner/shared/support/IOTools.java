@@ -7,6 +7,8 @@
  */
 package eu.maveniverse.maven.toolrunner.shared.support;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,8 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * IO helpers.
@@ -23,10 +26,13 @@ import java.util.Set;
 public final class IOTools {
     private IOTools() {}
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(IOTools.class);
+
     /**
      * Dereferences collection of paths, makes them real path and are returned only if resulting path exists.
      */
     public static Set<Path> dereference(Collection<Path> paths) throws IOException {
+        requireNonNull(paths);
         HashSet<Path> dereferenced = new HashSet<>();
         for (Path path : paths) {
             if (Files.exists(path)) {
@@ -36,13 +42,18 @@ public final class IOTools {
                 }
             }
         }
+        LOGGER.debug("Dereferenced paths from {} to {}", paths, dereferenced);
         return dereferenced;
     }
 
     private static final int DEFAULT_BUFFER_SIZE = 16384;
 
+    /**
+     * Copy from Java 9+
+     */
     public static long transferTo(InputStream in, OutputStream out) throws IOException {
-        Objects.requireNonNull(out, "out");
+        requireNonNull(in);
+        requireNonNull(out);
         long transferred = 0;
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
         int read;
@@ -59,6 +70,9 @@ public final class IOTools {
         return transferred;
     }
 
+    /**
+     * Copy from Java 9+
+     */
     public static InputStream nullInputStream() {
         return new InputStream() {
             private volatile boolean closed;
@@ -103,6 +117,9 @@ public final class IOTools {
         };
     }
 
+    /**
+     * Copy from Java 9+
+     */
     public static OutputStream nullOutputStream() {
         return new OutputStream() {
             private volatile boolean closed;

@@ -41,6 +41,8 @@ import org.eclipse.aether.resolution.VersionRequest;
 import org.eclipse.aether.resolution.VersionResolutionException;
 import org.eclipse.aether.resolution.VersionResult;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Reusable provisioners.
@@ -49,6 +51,8 @@ public final class Provisioners {
     private Provisioners() {}
 
     private static final String TOOLRUNNER_METADATA = "toolrunner-metadata.properties";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Provisioners.class);
 
     /**
      * Special version, to be used when "latest" is needed to be resolved with {@link #resolveArtifact(ToolContext, String)}.
@@ -67,6 +71,7 @@ public final class Provisioners {
     public static Optional<Artifact> resolveArtifact(ToolContext toolContext, String gav) throws IOException {
         requireNonNull(toolContext);
         requireNonNull(gav);
+        LOGGER.debug("Resolving artifact {}", gav);
         try (Context context = toolContext.createMimaContext()) {
             RepositorySystem repositorySystem = context.repositorySystem();
             RepositorySystemSession session = context.repositorySystemSession();
@@ -86,6 +91,7 @@ public final class Provisioners {
             } catch (ArtifactResolutionException e) {
                 if (!e.getResult().getExceptions().isEmpty()
                         && e.getResult().getExceptions().get(0) instanceof ArtifactNotFoundException) {
+                    LOGGER.debug("Artifact {} NOT FOUND", gav);
                     return Optional.empty();
                 }
                 throw new IOException("Unable to resolve artifact " + gav, e);
@@ -98,6 +104,7 @@ public final class Provisioners {
      */
     public static FileUtils.TempFile httpGet(ToolContext toolContext, String serverId, URI resourceUri)
             throws IOException {
+        LOGGER.debug("HTTP GET from {}", resourceUri.toASCIIString());
         try (Context context = toolContext.createMimaContext()) {
             HttpClientBuilder builder = new MavenHttpClient4Factory(context)
                     .createResolutionClient(
@@ -168,6 +175,7 @@ public final class Provisioners {
         if (!Files.isDirectory(toolHome)) {
             throw new IllegalArgumentException("Tool home is not a directory");
         }
+        LOGGER.debug("loadMetadata from {}", toolHome);
         Path metadataPath = toolHome.resolve(TOOLRUNNER_METADATA);
         if (Files.isRegularFile(metadataPath)) {
             try (InputStream in = Files.newInputStream(metadataPath)) {
@@ -186,6 +194,7 @@ public final class Provisioners {
         if (!Files.isDirectory(toolHome)) {
             throw new IllegalArgumentException("Tool home is not a directory");
         }
+        LOGGER.debug("saveMetadata to {}", toolHome);
         Path metadataPath = toolHome.resolve(TOOLRUNNER_METADATA);
         try (OutputStream out = Files.newOutputStream(metadataPath)) {
             Properties props = new Properties();

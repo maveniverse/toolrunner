@@ -21,12 +21,16 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OS helpers.
  */
 public final class OSTools {
     private OSTools() {}
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(OSTools.class);
 
     /**
      * Performs a simple path search using {@code which} or {@code where} commands.
@@ -56,12 +60,14 @@ public final class OSTools {
                             line = reader.readLine();
                         }
                     }
+                    LOGGER.debug("which: '{}' found paths: {}", executable, paths);
                     return Optional.of(paths);
                 }
             } catch (InterruptedException e) {
                 throw new IOException(e);
             }
         }
+        LOGGER.debug("which: '{}' found no paths", executable);
         return Optional.empty();
     }
 

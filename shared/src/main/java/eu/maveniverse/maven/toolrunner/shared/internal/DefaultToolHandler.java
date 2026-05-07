@@ -20,8 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultToolHandler implements ToolHandler {
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     private final ToolContext toolContext;
     private final ToolProvider toolProvider;
 
@@ -33,7 +36,9 @@ public class DefaultToolHandler implements ToolHandler {
     @Override
     public List<Map<String, String>> detectTool() {
         try {
-            return toolProvider.toolDetector().detectTool(toolContext);
+            List<Map<String, String>> result = toolProvider.toolDetector().detectTool(toolContext);
+            log.debug("detectTool result={}", result);
+            return result;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -41,6 +46,8 @@ public class DefaultToolHandler implements ToolHandler {
 
     @Override
     public Optional<ToolHandle> selectTool(Map<String, String> metadata) {
+        requireNonNull(metadata);
+        log.debug("selectTool metadata={}", metadata);
         try {
             Map<String, String> selected = null;
             List<Map<String, String>> detected = detectTool();
@@ -57,6 +64,10 @@ public class DefaultToolHandler implements ToolHandler {
                         .provisionTool(toolContext, metadata);
                 if (provisioned.isPresent()) {
                     selected = provisioned.orElseThrow(() -> new NoSuchElementException("No value present"));
+                    log.debug("Provisioner present, provisioned={}", selected);
+                    selected = provisioned.orElseThrow(() -> new NoSuchElementException("No value present"));
+                } else {
+                    log.debug("Provisioner present, provisioning failed");
                 }
             }
             if (selected == null) {
@@ -74,7 +85,12 @@ public class DefaultToolHandler implements ToolHandler {
 
     @Override
     public ToolHandle toolHandle() {
-        return selectTool(Collections.emptyMap())
-                .orElseThrow(() -> new IllegalStateException("No Tool detected nor could be provisioned"));
+        List<Map<String, String>> detected = detectTool();
+        if (detected.isEmpty()) {
+            return selectTool(Collections.emptyMap())
+                    .orElseThrow(() -> new IllegalStateException("No Tool detected nor could be provisioned"));
+        } else {
+            return new DefaultToolHandle(toolContext, detected.get(0), toolProvider.toolExecutor());
+        }
     }
 }

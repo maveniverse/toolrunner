@@ -61,7 +61,6 @@ public final class ProcessBuilderExecutor {
         if (timeoutMillis <= 0) {
             throw new IllegalArgumentException("Timeout must be greater than zero");
         }
-        LOGGER.debug("Executing process builder command: {}", execution);
         // Adjust the process invocation to circumvent possible limited buffers
         ArrayList<String> command = new ArrayList<>();
         if (ToolProvider.IS_WINDOWS) {
@@ -85,7 +84,9 @@ public final class ProcessBuilderExecutor {
         Process process = pb.start();
         try {
             if (pump(process, execution).await(timeoutMillis, TimeUnit.MILLISECONDS)) {
-                return new ProcessBuilderToolExecutorResult(process.waitFor());
+                int exitCode = process.waitFor();
+                LOGGER.debug("Executing process builder command: {}; exitCode={}", execution, exitCode);
+                return new ProcessBuilderToolExecutorResult(exitCode);
             } else {
                 process.destroyForcibly();
                 throw new IOException("Process timeout");

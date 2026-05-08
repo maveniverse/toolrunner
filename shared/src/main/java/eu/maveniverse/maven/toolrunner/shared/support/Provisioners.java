@@ -22,6 +22,9 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -42,10 +45,11 @@ import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.VersionRequest;
-import org.eclipse.aether.resolution.VersionResolutionException;
-import org.eclipse.aether.resolution.VersionResult;
+import org.eclipse.aether.resolution.VersionRangeRequest;
+import org.eclipse.aether.resolution.VersionRangeResolutionException;
+import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
+import org.eclipse.aether.version.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,17 +85,18 @@ public final class Provisioners {
             RepositorySystem repositorySystem = context.repositorySystem();
             RepositorySystemSession session = context.repositorySystemSession();
             try {
-                DefaultArtifact artifact = new DefaultArtifact(gav);
+                Artifact artifact = new DefaultArtifact(gav);
                 if (RELEASE_VERSION.equals(artifact.getVersion())) {
-                    VersionResult versionResult = repositorySystem.resolveVersion(
-                            session, new VersionRequest(artifact, context.remoteRepositories(), "toolrunner"));
-                    artifact.setVersion(versionResult.getVersion());
+                    artifact = artifact.setVersion("[0,)");
+                    VersionRangeResult versionRangeResult = repositorySystem.resolveVersionRange(
+                            session, new VersionRangeRequest(artifact, context.remoteRepositories(), "toolrunner"));
+                    artifact = artifact.setVersion(selectVersion(artifact, versionRangeResult.getVersions()));
                 }
                 return Optional.of(repositorySystem
                         .resolveArtifact(
                                 session, new ArtifactRequest(artifact, context.remoteRepositories(), "toolrunner"))
                         .getArtifact());
-            } catch (VersionResolutionException e) {
+            } catch (VersionRangeResolutionException e) {
                 throw new IOException("Unable to resolve artifact version " + gav, e);
             } catch (ArtifactResolutionException e) {
                 if (!e.getResult().getExceptions().isEmpty()
@@ -102,6 +107,54 @@ public final class Provisioners {
                 throw new IOException("Unable to resolve artifact " + gav, e);
             }
         }
+    }
+
+    /**
+     * Selects gratest, non-snapshot, non-preview version.
+     */
+    private static String selectVersion(Artifact artifact, List<Version> versionRangeResult) {
+        Artifact candidate = artifact;
+        ArrayList<Version> descending = new ArrayList<>(versionRangeResult);
+        Collections.reverse(descending);
+        for (Version version : descending) {
+            candidate = candidate.setVersion(version.toString());
+            if (candidate.isSnapshot()) {
+                continue;
+            }
+            if (isPreviewVersion(version.toString())) {
+                continue;
+            }
+            break;
+        }
+        return candidate.getVersion();
+    }
+
+    /**
+     * Returns {@code true} if version is "preview version".
+     */
+    private static boolean isPreviewVersion(String version) {
+        // most trivial "preview" version is 'a1'
+        if (version.length() > 1) {
+            String ver = version.toLowerCase(Locale.ENGLISH);
+            // simple case: contains any of these
+            if (ver.contains("alpha")
+                    || ver.contains("beta")
+                    || ver.contains("milestone")
+                    || ver.contains("rc")
+                    || ver.contains("cr")) {
+                return true;
+            }
+            // complex case: contains 'a', 'b' or 'm' followed immediately by number
+            for (char ch : new char[] {'a', 'b', 'm'}) {
+                int idx = ver.lastIndexOf(ch);
+                if (idx > -1 && ver.length() > idx + 1) {
+                    if (Character.isDigit(ver.charAt(idx + 1))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**

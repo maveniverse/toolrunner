@@ -12,10 +12,13 @@ import static java.util.Objects.requireNonNull;
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -36,9 +39,13 @@ public final class ProcessBuilderExecutor {
      */
     public static class ProcessBuilderToolExecutorResult implements ToolHandle.Result {
         private final int exitCode;
+        private final String stdout;
+        private final String stderr;
 
-        public ProcessBuilderToolExecutorResult(int exitCode) {
+        public ProcessBuilderToolExecutorResult(int exitCode, String stdout, String stderr) {
             this.exitCode = exitCode;
+            this.stdout = stdout;
+            this.stderr = stderr;
         }
 
         @Override
@@ -46,8 +53,19 @@ public final class ProcessBuilderExecutor {
             return exitCode == 0;
         }
 
-        public int getExitCode() {
-            return exitCode;
+        @Override
+        public Optional<Integer> exitCode() {
+            return Optional.of(exitCode);
+        }
+
+        @Override
+        public Optional<String> stdOutString() {
+            return Optional.ofNullable(stdout);
+        }
+
+        @Override
+        public Optional<String> stdErrString() {
+            return Optional.ofNullable(stderr);
         }
     }
 
@@ -81,14 +99,31 @@ public final class ProcessBuilderExecutor {
 
         Process process = pb.start();
         try {
-            if (pump(process, execution).await(timeoutMillis, TimeUnit.MILLISECONDS)) {
+            InputStream stdIn = execution.stdIn().orElse(IOTools.nullInputStream());
+            OutputStream stdOut;
+            OutputStream stdErr;
+            if (execution.grabOutputAsString()) {
+                stdOut = new ByteArrayOutputStream();
+                stdErr = new ByteArrayOutputStream();
+            } else {
+                stdOut = execution.stdOut().orElse(IOTools.nullOutputStream());
+                stdErr = execution.stdErr().orElse(IOTools.nullOutputStream());
+            }
+            if (pump(process, stdIn, stdOut, stdErr).await(timeoutMillis, TimeUnit.MILLISECONDS)) {
                 int exitCode = process.waitFor();
                 LOGGER.debug(
                         "Executing process builder execution: {}; command: {}; exitCode={}",
                         execution,
                         command,
                         exitCode);
-                return new ProcessBuilderToolExecutorResult(exitCode);
+                String stdOutString = null;
+                String stdErrString = null;
+                if (execution.grabOutputAsString()) {
+                    // they are ByteArrayOutputStreams
+                    stdOutString = stdOut.toString();
+                    stdErrString = stdErr.toString();
+                }
+                return new ProcessBuilderToolExecutorResult(exitCode, stdOutString, stdErrString);
             } else {
                 process.destroyForcibly();
                 throw new IOException("Process timeout");
@@ -113,11 +148,11 @@ public final class ProcessBuilderExecutor {
     /**
      * Pumps standard streams of sub-process to execution provided streams.
      */
-    private static CountDownLatch pump(Process p, ToolExecution execution) {
+    private static CountDownLatch pump(Process p, InputStream stdIn, OutputStream stdOut, OutputStream stdErr) {
         CountDownLatch latch = new CountDownLatch(3);
         String suffix = "-pump-" + ThreadLocalRandom.current().nextInt();
         Thread stdoutPump = new Thread(() -> {
-            try (OutputStream stdout = execution.stdOut().orElse(IOTools.nullOutputStream())) {
+            try (OutputStream stdout = stdOut) {
                 IOTools.transferTo(p.getInputStream(), stdout);
                 stdout.flush();
             } catch (IOException e) {
@@ -130,7 +165,7 @@ public final class ProcessBuilderExecutor {
         stdoutPump.setDaemon(true);
         stdoutPump.start();
         Thread stderrPump = new Thread(() -> {
-            try (OutputStream stderr = execution.stdErr().orElse(IOTools.nullOutputStream())) {
+            try (OutputStream stderr = stdErr) {
                 IOTools.transferTo(p.getErrorStream(), stderr);
                 stderr.flush();
             } catch (IOException e) {
@@ -144,7 +179,7 @@ public final class ProcessBuilderExecutor {
         stderrPump.start();
         Thread stdinPump = new Thread(() -> {
             try (OutputStream in = p.getOutputStream()) {
-                IOTools.transferTo(execution.stdIn().orElse(IOTools.nullInputStream()), in);
+                IOTools.transferTo(stdIn, in);
                 in.flush();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);

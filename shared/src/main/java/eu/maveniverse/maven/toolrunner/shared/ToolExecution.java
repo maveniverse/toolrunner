@@ -63,8 +63,15 @@ public interface ToolExecution {
     Optional<Map<String, String>> environmentVariables();
 
     /**
+     * Whether execution outputs (STDOUT and STDERR) should be captured as plain {@link String}.
+     * By default, this is {@code true}, unless client manually sets any of {@link #stdOut()} or {@link #stdErr()}
+     * streams, in which case this value is set to {@code false} and caller must handle these streams manually.
+     */
+    boolean grabOutputAsString();
+
+    /**
      * Optional provider for STD in of the Maven. If given, this provider will be piped into std input of
-     * Maven.
+     * Maven. The stream is closed once tool execution is finished.
      *
      * @return an Optional containing the stdin provider, or empty if not specified.
      */
@@ -74,6 +81,7 @@ public interface ToolExecution {
      * Optional consumer for STD out of the Maven. If given, this consumer will get all output from the std out of
      * Maven. Note: whether consumer gets to consume anything depends on invocation arguments passed in
      * {@link #arguments()}, as if log file is set, not much will go to stdout.
+     * The stream is closed once tool execution is finished.
      *
      * @return an Optional containing the stdout consumer, or empty if not specified.
      */
@@ -83,6 +91,7 @@ public interface ToolExecution {
      * Optional consumer for STD err of the Maven. If given, this consumer will get all output from the std err of
      * Maven. Note: whether consumer gets to consume anything depends on invocation arguments passed in
      * {@link #arguments()}, as if log file is set, not much will go to stderr.
+     *  The stream is closed once tool execution is finished.
      *
      * @return an Optional containing the stderr consumer, or empty if not specified.
      */
@@ -97,6 +106,7 @@ public interface ToolExecution {
                 arguments(),
                 cwd(),
                 environmentVariables().orElse(null),
+                grabOutputAsString(),
                 stdIn().orElse(null),
                 stdOut().orElse(null),
                 stdErr().orElse(null));
@@ -106,7 +116,8 @@ public interface ToolExecution {
      * Returns new builder pre-set to run command. The discovery of user cwd also discovered by standard means.
      */
     static Builder ofCommand(String command) {
-        return new Builder(command, null, FileUtils.discoverUserCurrentWorkingDirectory(), null, null, null, null);
+        return new Builder(
+                command, null, FileUtils.discoverUserCurrentWorkingDirectory(), null, true, null, null, null);
     }
 
     class Builder {
@@ -114,6 +125,7 @@ public interface ToolExecution {
         private List<String> arguments;
         private Path cwd;
         private Map<String, String> environmentVariables;
+        private boolean grabOutputAsString;
         private InputStream stdIn;
         private OutputStream stdOut;
         private OutputStream stdErr;
@@ -125,6 +137,7 @@ public interface ToolExecution {
                 List<String> arguments,
                 Path cwd,
                 Map<String, String> environmentVariables,
+                boolean grabOutputAsString,
                 InputStream stdIn,
                 OutputStream stdOut,
                 OutputStream stdErr) {
@@ -132,6 +145,7 @@ public interface ToolExecution {
             this.arguments = arguments;
             this.cwd = cwd;
             this.environmentVariables = environmentVariables;
+            this.grabOutputAsString = grabOutputAsString;
             this.stdIn = stdIn;
             this.stdOut = stdOut;
             this.stdErr = stdErr;
@@ -193,17 +207,19 @@ public interface ToolExecution {
         }
 
         public Builder stdOut(OutputStream stdOut) {
+            this.grabOutputAsString = false;
             this.stdOut = stdOut;
             return this;
         }
 
         public Builder stdErr(OutputStream stdErr) {
+            this.grabOutputAsString = false;
             this.stdErr = stdErr;
             return this;
         }
 
         public ToolExecution build() {
-            return new Impl(command, arguments, cwd, environmentVariables, stdIn, stdOut, stdErr);
+            return new Impl(command, arguments, cwd, environmentVariables, grabOutputAsString, stdIn, stdOut, stdErr);
         }
 
         private static class Impl implements ToolExecution {
@@ -211,6 +227,7 @@ public interface ToolExecution {
             private final List<String> arguments;
             private final Path cwd;
             private final Map<String, String> environmentVariables;
+            private final boolean grabOutputAsString;
             private final InputStream stdIn;
             private final OutputStream stdOut;
             private final OutputStream stdErr;
@@ -220,6 +237,7 @@ public interface ToolExecution {
                     List<String> arguments,
                     Path cwd,
                     Map<String, String> environmentVariables,
+                    boolean grabOutputAsString,
                     InputStream stdIn,
                     OutputStream stdOut,
                     OutputStream stdErr) {
@@ -229,6 +247,7 @@ public interface ToolExecution {
                 this.environmentVariables = environmentVariables != null && !environmentVariables.isEmpty()
                         ? Collections.unmodifiableMap(new HashMap<>(environmentVariables))
                         : null;
+                this.grabOutputAsString = grabOutputAsString;
                 this.stdIn = stdIn;
                 this.stdOut = stdOut;
                 this.stdErr = stdErr;
@@ -255,6 +274,11 @@ public interface ToolExecution {
             }
 
             @Override
+            public boolean grabOutputAsString() {
+                return grabOutputAsString;
+            }
+
+            @Override
             public Optional<InputStream> stdIn() {
                 return Optional.ofNullable(stdIn);
             }
@@ -275,7 +299,8 @@ public interface ToolExecution {
                         + command + '\'' + ", arguments="
                         + arguments + ", cwd="
                         + cwd + ", environmentVariables="
-                        + environmentVariables + ", stdIn="
+                        + environmentVariables + ", grabOutputAsString="
+                        + grabOutputAsString + ", stdIn="
                         + stdIn + ", stdOut="
                         + stdOut + ", stdErr="
                         + stdErr + '}';

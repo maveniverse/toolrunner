@@ -14,7 +14,6 @@ import eu.maveniverse.maven.toolrunner.shared.Config;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
@@ -47,12 +46,16 @@ public class AntProviderTest {
 
             // provision latest JBang
             ToolHandle handle = handler.toolHandle();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            handle.execute(
-                    handle.executionTemplate().argument("-version").stdOut(baos).build());
+            ToolHandle.Result result = handle.execute(
+                    handle.executionTemplate().argument("-version").build());
             assertTrue(
-                    baos.toString().trim().contains(handle.toolMetadata().get(ToolHandler.TOOL_VERSION)),
-                    baos.toString().trim());
+                    result.stdOutString()
+                            .orElse("")
+                            .trim()
+                            .contains(handle.toolMetadata().get(ToolHandler.TOOL_VERSION)),
+                    result.stdOutString()
+                            .orElseThrow(() -> new NoSuchElementException("No value present"))
+                            .trim());
 
             // detect again, we should have one more provisioned
             detected = handler.detectTool();

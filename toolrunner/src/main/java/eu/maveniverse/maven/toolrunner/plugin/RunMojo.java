@@ -13,10 +13,10 @@ import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -99,23 +99,25 @@ public class RunMojo extends MojoSupport {
             } else {
                 handle = handler.toolHandle();
             }
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            ByteArrayOutputStream err = new ByteArrayOutputStream();
             ToolExecution.Builder execution = handle.executionTemplate()
                     .addArguments(arguments)
-                    .cwd(mavenSession.getCurrentProject().getBasedir().toPath())
-                    .stdOut(out)
-                    .stdErr(err);
+                    .cwd(mavenSession.getCurrentProject().getBasedir().toPath());
             if (command != null) {
                 execution.command(command);
             }
             ToolHandle.Result result = handle.execute(execution.build());
             if (result.success()) {
-                logger.info(out.toString().trim());
+                logger.info(result.stdOutString()
+                        .orElseThrow(() -> new NoSuchElementException("No value present"))
+                        .trim());
             } else {
-                String stdout = out.toString().trim();
-                String stderr = err.size() > 0 ? err.toString().trim() : null;
-                if (stderr != null) {
+                String stdout = result.stdOutString()
+                        .orElseThrow(() -> new NoSuchElementException("No value present"))
+                        .trim();
+                String stderr = result.stdErrString()
+                        .orElseThrow(() -> new NoSuchElementException("No value present"))
+                        .trim();
+                if (!stderr.isEmpty()) {
                     throw new MojoFailureException("Failed to execute tool: " + stdout + " (err: " + stderr + ")");
                 } else {
                     throw new MojoFailureException("Failed to execute tool: " + stdout);

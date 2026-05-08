@@ -22,7 +22,6 @@ import eu.maveniverse.maven.toolrunner.shared.support.IOTools;
 import eu.maveniverse.maven.toolrunner.shared.support.OSTools;
 import eu.maveniverse.maven.toolrunner.shared.support.ProcessBuilderExecutor;
 import eu.maveniverse.maven.toolrunner.shared.support.Provisioners;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -117,9 +116,6 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
      * Collects basic information about discovered JBang home.
      */
     protected Optional<Map<String, String>> tryHome(ToolContext context, Path home) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
-
         Optional<Map<String, String>> maybeExisting = Provisioners.loadMetadata(context, home);
         if (maybeExisting.isPresent()) {
             return maybeExisting;
@@ -128,10 +124,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(JBangProvider.HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata)
-                .addArguments("version", "--verbose")
-                .stdOut(out)
-                .stdErr(err);
+        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("version", "--verbose");
         // TODO: maybe collect more info?
         // $ jbang version --verbose
         // err:
@@ -152,7 +145,11 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
             if (result.success()) {
                 HashMap<String, String> md = new HashMap<>();
                 md.put(ToolHandler.TOOL_NAME, NAME);
-                md.put(ToolHandler.TOOL_VERSION, out.toString().trim());
+                md.put(
+                        ToolHandler.TOOL_VERSION,
+                        result.stdOutString()
+                                .orElseThrow(() -> new NoSuchElementException("No value present"))
+                                .trim());
                 md.put(JBangProvider.HOME, home.toString());
                 return Optional.of(md);
             }

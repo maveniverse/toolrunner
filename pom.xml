@@ -19,7 +19,7 @@
 
   <groupId>eu.maveniverse.maven.toolrunner</groupId>
   <artifactId>toolrunner</artifactId>
-  <version>0.2.2-SNAPSHOT</version>
+  <version>0.2.2</version>
   <packaging>pom</packaging>
 
   <name>${project.groupId}:${project.artifactId}</name>
@@ -45,7 +45,7 @@
   <scm>
     <connection>scm:git:git@github.com:maveniverse/toolrunner.git</connection>
     <developerConnection>scm:git:git@github.com:maveniverse/toolrunner.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>release-0.2.2</tag>
     <url>https://github.com/maveniverse/toolrunner</url>
   </scm>
 
@@ -60,7 +60,7 @@
   </ciManagement>
 
   <properties>
-    <project.build.outputTimestamp>2026-05-07T23:17:43Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2026-05-08T13:00:33Z</project.build.outputTimestamp>
 
     <!--
     Build time: latest stable Maven and latest Java LTS.

@@ -14,7 +14,7 @@
   <parent>
     <groupId>eu.maveniverse.maven.toolrunner.it</groupId>
     <artifactId>it</artifactId>
-    <version>0.2.2-SNAPSHOT</version>
+    <version>0.2.2</version>
   </parent>
 
   <artifactId>toolrunner-plugin-its</artifactId>

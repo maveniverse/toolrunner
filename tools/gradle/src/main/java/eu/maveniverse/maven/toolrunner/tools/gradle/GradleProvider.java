@@ -22,7 +22,6 @@ import eu.maveniverse.maven.toolrunner.shared.support.IOTools;
 import eu.maveniverse.maven.toolrunner.shared.support.OSTools;
 import eu.maveniverse.maven.toolrunner.shared.support.ProcessBuilderExecutor;
 import eu.maveniverse.maven.toolrunner.shared.support.Provisioners;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -113,9 +112,6 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
      * Collects basic information about discovered JBang home.
      */
     protected Optional<Map<String, String>> tryHome(ToolContext context, Path home) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
-
         Optional<Map<String, String>> maybeExisting = Provisioners.loadMetadata(context, home);
         if (maybeExisting.isPresent()) {
             return maybeExisting;
@@ -124,10 +120,7 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(GradleProvider.HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata)
-                .addArguments("-v")
-                .stdOut(out)
-                .stdErr(err);
+        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("-v");
         // TODO: maybe collect more info?
         // $ gradle -v
         //
@@ -151,7 +144,10 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
         try {
             ToolHandle.Result result = executeTool(context, metadata, exe.build());
             if (result.success()) {
-                String[] versions = out.toString().trim().split("\\s");
+                String[] versions = result.stdOutString()
+                        .orElseThrow(() -> new NoSuchElementException("No value present"))
+                        .trim()
+                        .split("\\s");
                 String version = versions[2];
                 HashMap<String, String> md = new HashMap<>();
                 md.put(ToolHandler.TOOL_NAME, NAME);

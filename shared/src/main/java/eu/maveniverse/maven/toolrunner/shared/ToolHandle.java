@@ -8,6 +8,7 @@
 package eu.maveniverse.maven.toolrunner.shared;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The Tool Handle: this handle represents single installation of tool.
@@ -35,7 +36,33 @@ public interface ToolHandle {
      * depends on provider.
      */
     interface Result {
+        /**
+         * The outcome of execution.
+         */
         boolean success();
+
+        /**
+         * The exit code, if available (ie running the tool happened in a way it did produce exit code).
+         */
+        default Optional<Integer> exitCode() {
+            return Optional.empty();
+        }
+
+        /**
+         * If {@link ToolExecution#grabOutputAsString()} was {@code true}, then the {@link String} containing
+         * STDOUT of tool. Never {@code null}, but maybe empty string. Otherwise, empty.
+         */
+        default Optional<String> stdOutString() {
+            return Optional.empty();
+        }
+
+        /**
+         * If {@link ToolExecution#grabOutputAsString()} was {@code true}, then the {@link String} containing
+         * STDERR of tool. Never {@code null}, but maybe empty string. Otherwise, empty.
+         */
+        default Optional<String> stdErrString() {
+            return Optional.empty();
+        }
     }
 
     /**

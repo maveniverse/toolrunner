@@ -22,7 +22,6 @@ import eu.maveniverse.maven.toolrunner.shared.support.IOTools;
 import eu.maveniverse.maven.toolrunner.shared.support.OSTools;
 import eu.maveniverse.maven.toolrunner.shared.support.ProcessBuilderExecutor;
 import eu.maveniverse.maven.toolrunner.shared.support.Provisioners;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -113,9 +112,6 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
      * Collects basic information about discovered JBang home.
      */
     protected Optional<Map<String, String>> tryHome(ToolContext context, Path home) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ByteArrayOutputStream err = new ByteArrayOutputStream();
-
         Optional<Map<String, String>> maybeExisting = Provisioners.loadMetadata(context, home);
         if (maybeExisting.isPresent()) {
             return maybeExisting;
@@ -124,10 +120,7 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(AntProvider.HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata)
-                .addArguments("-version")
-                .stdOut(out)
-                .stdErr(err);
+        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("-version");
         // TODO: maybe collect more info?
         // $ ant -version
         // Apache Ant(TM) version 1.10.17 compiled on April 6 2026
@@ -136,7 +129,10 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         try {
             ToolHandle.Result result = executeTool(context, metadata, exe.build());
             if (result.success()) {
-                String[] versions = out.toString().trim().split(" ");
+                String[] versions = result.stdOutString()
+                        .orElseThrow(() -> new NoSuchElementException("No value present"))
+                        .trim()
+                        .split(" ");
                 String version = versions[3];
                 HashMap<String, String> md = new HashMap<>();
                 md.put(ToolHandler.TOOL_NAME, NAME);

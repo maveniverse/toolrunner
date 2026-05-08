@@ -90,6 +90,9 @@ public final class Provisioners {
                     artifact = artifact.setVersion("[0,)");
                     VersionRangeResult versionRangeResult = repositorySystem.resolveVersionRange(
                             session, new VersionRangeRequest(artifact, context.remoteRepositories(), "toolrunner"));
+                    if (versionRangeResult.getVersions().isEmpty()) {
+                        throw new IOException("No versions found for artifact " + gav);
+                    }
                     artifact = artifact.setVersion(selectVersion(artifact, versionRangeResult.getVersions()));
                 }
                 return Optional.of(repositorySystem
@@ -112,7 +115,7 @@ public final class Provisioners {
     /**
      * Selects gratest, non-snapshot, non-preview version.
      */
-    private static String selectVersion(Artifact artifact, List<Version> versionRangeResult) {
+    private static String selectVersion(Artifact artifact, List<Version> versionRangeResult) throws IOException {
         Artifact candidate = artifact;
         ArrayList<Version> descending = new ArrayList<>(versionRangeResult);
         Collections.reverse(descending);
@@ -126,7 +129,11 @@ public final class Provisioners {
             }
             break;
         }
-        return candidate.getVersion();
+        if (!candidate.isSnapshot() && !isPreviewVersion(candidate.getVersion())) {
+            return candidate.getVersion();
+        } else {
+            throw new IOException("No suitable tool version found " + versionRangeResult);
+        }
     }
 
     /**

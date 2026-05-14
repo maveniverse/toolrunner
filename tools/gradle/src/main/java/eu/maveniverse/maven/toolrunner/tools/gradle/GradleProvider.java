@@ -173,7 +173,7 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
         String version = null;
         if (isLatest) {
             // TODO: discover
-            version = "9.5.0";
+            version = "9.5.1";
             uri = String.format("https://services.gradle.org/distributions/gradle-%s-bin.zip", version);
             homePath = NAME + "-" + version;
         } else {

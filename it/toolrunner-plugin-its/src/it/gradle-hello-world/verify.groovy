@@ -6,4 +6,4 @@
  * https://www.eclipse.org/legal/epl-v20.html
  */
 String buildLog = new File(basedir, 'build.log').text
-assert buildLog.contains('BUILD SUCCESSFUL')
+assert buildLog.contains('BUILD SUCCESSFUL in ')

@@ -43,7 +43,11 @@ public final class ToolRunnerLifecycleMappingProvider extends AbstractLifecycleM
                                 return ":" + s;
                             }
                         })
-                + ":run"
+                + ":run",
+        "install",
+        "org.apache.maven.plugins:maven-install-plugin:install",
+        "deploy",
+        "org.apache.maven.plugins:maven-deploy-plugin:deploy"
     };
     // END SNIPPET: blank
 

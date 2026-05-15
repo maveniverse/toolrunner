@@ -45,6 +45,8 @@ public interface ToolHandler {
     /**
      * Returns optionally a tool handle of belonging to specific discovered metadata. If passed in metadata is not
      * present/installed/matched, empty optional is returned. This method never returns {@code null}.
+     *
+     * @param metadata the tool metadata to select. It must not be {@code null}.
      */
     Optional<ToolHandle> selectTool(Map<String, String> metadata);
 

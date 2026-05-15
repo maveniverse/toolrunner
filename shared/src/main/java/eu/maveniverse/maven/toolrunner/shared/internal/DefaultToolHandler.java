@@ -52,7 +52,8 @@ public class DefaultToolHandler implements ToolHandler {
             Map<String, String> selected = null;
             List<Map<String, String>> detected = detectTool();
             for (Map<String, String> tool : detected) {
-                if (tool.equals(metadata)) {
+                // user given conditions should be tested; not map equality
+                if (tool.entrySet().containsAll(metadata.entrySet())) {
                     selected = tool;
                     break;
                 }
@@ -85,12 +86,8 @@ public class DefaultToolHandler implements ToolHandler {
 
     @Override
     public ToolHandle toolHandle() {
-        List<Map<String, String>> detected = detectTool();
-        if (detected.isEmpty()) {
-            return selectTool(Collections.emptyMap())
-                    .orElseThrow(() -> new IllegalStateException("No Tool detected nor could be provisioned"));
-        } else {
-            return new DefaultToolHandle(toolContext, detected.get(0), toolProvider.toolExecutor());
-        }
+        return selectTool(Collections.emptyMap())
+                .orElseThrow(() -> new IllegalStateException(
+                        "No '" + toolProvider.name() + "' Tool detected nor could be provisioned"));
     }
 }

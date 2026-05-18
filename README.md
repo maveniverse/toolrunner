@@ -20,14 +20,14 @@ Build requirements:
 - `gradle` see https://gradle.org/ (1)
 - `isx` see https://github.com/Sanne/incus-spawn (2)
 - `jbang` see https://github.com/jbangdev/jbang
-- `jdk` see https://openjdk.org/`jdk` (3)
+- `jdk` the `$JAVA_HOME/bin/*` tools (3)
 - `maven` see https://maven.apache.org/
 - `minisign` see https://github.com/jedisct1/minisign (1)
 
 Limitations:
 * (1) Real version discovery is not yet done, so when LATEST asked, right now a currently known "latest" version is used.
 * (2) The `isx` is really new tool, only LATEST is being provisioned.
-* (3) This is a special case, as JDK tool provider always offers "self", the JDK that runs the tool. It currently never provision and supports only currently running JDK, but in the future it may support provisioning and running other JDKs.
+* (3) This is a special case, as JDK tool provider always offers "self", the JDK that runs the tool. It currently never provision and supports, it always offers currently running JDK. In the future it may support provisioning and running other JDKs.
 
 ## Project structure
 

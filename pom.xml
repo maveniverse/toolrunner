@@ -103,6 +103,11 @@
       </dependency>
       <dependency>
         <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+        <artifactId>cosign</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
         <artifactId>gradle</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -124,6 +129,11 @@
       <dependency>
         <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
         <artifactId>maven</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+        <artifactId>minisign</artifactId>
         <version>${project.version}</version>
       </dependency>
 

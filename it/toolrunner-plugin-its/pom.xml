@@ -37,6 +37,10 @@
     </dependency>
     <dependency>
       <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+      <artifactId>cosign</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
       <artifactId>gradle</artifactId>
     </dependency>
     <dependency>
@@ -54,6 +58,10 @@
     <dependency>
       <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
       <artifactId>maven</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.toolrunner.tools</groupId>
+      <artifactId>minisign</artifactId>
     </dependency>
   </dependencies>
 

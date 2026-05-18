@@ -25,10 +25,12 @@
 
   <modules>
     <module>ant</module>
+    <module>cosign</module>
     <module>gradle</module>
     <module>isx</module>
     <module>jbang</module>
     <module>jdk</module>
     <module>maven</module>
+    <module>minisign</module>
   </modules>
 </project>

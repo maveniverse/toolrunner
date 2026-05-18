@@ -12,6 +12,10 @@ import static java.util.Objects.requireNonNull;
 import eu.maveniverse.maven.mima.context.Context;
 import eu.maveniverse.maven.mima.context.ContextOverrides;
 import eu.maveniverse.maven.mima.context.Runtimes;
+import eu.maveniverse.maven.nisse.core.PropertyKeyNamingStrategies;
+import eu.maveniverse.maven.nisse.core.simple.SimpleNisseConfiguration;
+import eu.maveniverse.maven.nisse.core.simple.SimpleNisseManager;
+import eu.maveniverse.maven.nisse.source.osdetector.OsDetectorPropertySource;
 import eu.maveniverse.maven.shared.core.fs.FileUtils;
 import eu.maveniverse.maven.shared.core.maven.MavenUtils;
 import eu.maveniverse.maven.toolrunner.shared.Config;
@@ -44,6 +48,7 @@ public class DefaultToolManager implements ToolManager, ToolContext {
     private final String userAgent;
     private final Map<String, String> httpHeaders;
     private final long timeout;
+    private final Map<String, String> detectedOs;
 
     private final AtomicBoolean closed;
     private final Map<String, ToolProvider> toolProviders;
@@ -66,6 +71,13 @@ public class DefaultToolManager implements ToolManager, ToolContext {
         this.userAgent = config.userAgent().orElse("ToolRunner/" + this.toolRunnerVersion);
         this.httpHeaders = config.httpHeaders().orElse(Collections.emptyMap());
         this.timeout = config.timeout().orElse(TimeUnit.HOURS.toMillis(1L));
+
+        this.detectedOs = Collections.unmodifiableMap(
+                new SimpleNisseManager(Collections.singletonList(new OsDetectorPropertySource()))
+                        .createProperties(SimpleNisseConfiguration.builder()
+                                .withSystemProperties(System.getProperties())
+                                .withPropertyKeyNamingStrategy(PropertyKeyNamingStrategies.prefixed(""))
+                                .build()));
 
         this.closed = new AtomicBoolean(false);
         this.toolProviders = new HashMap<>();
@@ -115,6 +127,11 @@ public class DefaultToolManager implements ToolManager, ToolContext {
     @Override
     public long toolTimeout() {
         return timeout;
+    }
+
+    @Override
+    public Map<String, String> detectedOs() {
+        return detectedOs;
     }
 
     @Override

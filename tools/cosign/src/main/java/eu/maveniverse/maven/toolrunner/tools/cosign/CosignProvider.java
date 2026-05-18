@@ -217,7 +217,8 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
         }
         Optional<Map<String, String>> provisioned = tryHome(context, installDir);
         if (provisioned.isPresent()) {
-            Provisioners.saveMetadata(context, installDir, provisioned.orElseThrow(() -> new NoSuchElementException("No value present")));
+            Provisioners.saveMetadata(
+                    context, installDir, provisioned.orElseThrow(() -> new NoSuchElementException("No value present")));
         }
         return provisioned;
     }

@@ -48,7 +48,8 @@ public class CosignProviderTest {
             // provision latest
             ToolHandle handle = handler.toolHandle();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            handle.execute(handle.executionTemplate().argument("version").stdOut(out).build());
+            handle.execute(
+                    handle.executionTemplate().argument("version").stdOut(out).build());
             assertTrue(out.toString().trim().contains(handle.toolMetadata().get(ToolHandler.TOOL_VERSION)));
 
             // detect again, we should have one more provisioned

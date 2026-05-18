@@ -66,4 +66,9 @@ public interface ToolContext {
      * The timeout in milliseconds, that tool has allowed to run.
      */
     long toolTimeout();
+
+    /**
+     * OS detected properties.
+     */
+    Map<String, String> detectedOs();
 }

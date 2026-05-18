@@ -72,6 +72,16 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- Nisse OS/native support -->
+    <dependency>
+      <groupId>eu.maveniverse.maven.nisse</groupId>
+      <artifactId>core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>eu.maveniverse.maven.nisse.sources</groupId>
+      <artifactId>os-source</artifactId>
+    </dependency>
+
     <!-- Takari Archiver -->
     <dependency>
       <groupId>io.takari</groupId>

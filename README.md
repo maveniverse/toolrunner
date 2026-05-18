@@ -6,8 +6,8 @@ as part of the build.
 ## Requirements
 
 Runtime requirement:
-* Java 17+ (CLI and Maven Plugin)
-* Maven 3.9+ (Maven Plugin)
+* Java 8+ (library and Maven Plugin)
+* Maven 3.6+ (Maven Plugin)
 
 Build requirements:
 * Java 21

@@ -1,6 +1,6 @@
 # Tool Runner
 
-Tool Runner is a utility and a Maven plugin, that allows one to run (and optionally provision beforehand) supported CLI tools 
+Tool Runner is a utility and a Maven plugin, that allows to run (and optionally provision beforehand) supported CLI tools 
 as part of the build.
 
 ## Requirements
@@ -12,6 +12,20 @@ Runtime requirement:
 Build requirements:
 * Java 21
 * Maven 3.9+
+
+## Supported tools
+
+- `minisign` see https://github.com/jedisct1/minisign (1)
+- `cosign` see https://github.com/sigstore/cosign (1)
+- `jbang` see https://github.com/jbangdev/jbang
+- `gradle` see https://gradle.org/ (1)
+- `ant` see https://ant.apache.org/ (1)
+- `maven` see https://maven.apache.org/
+- `jdk` see https://openjdk.org/`jdk` (2)
+
+Limitations:
+* (1) Real version discovery is not yet done, so when LATEST asked, right now a currently known "latest" version is used.
+* (2) This is a special case, as JDK tool provider always offers "self", the JDK that runs the tool. It currently never provision and supports only currently running JDK, but in the future it may support provisioning and running other JDKs.
 
 ## Project structure
 

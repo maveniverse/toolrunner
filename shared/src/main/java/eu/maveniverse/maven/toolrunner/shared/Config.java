@@ -7,6 +7,7 @@
  */
 package eu.maveniverse.maven.toolrunner.shared;
 
+import eu.maveniverse.maven.shared.core.fs.FileUtils;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -72,9 +73,12 @@ public interface Config {
         private Long timeout;
 
         private Builder() {
-            this.isTransient = true;
-            this.allowPathDetection = true;
-            this.installationDirectory = null;
+            this.isTransient = Boolean.parseBoolean(
+                    System.getProperty("maveniverse.toolrunner.isTransient", Boolean.FALSE.toString()));
+            this.allowPathDetection = Boolean.parseBoolean(
+                    System.getProperty("maveniverse.toolrunner.allowPathDetection", Boolean.TRUE.toString()));
+            this.installationDirectory = FileUtils.discoverCanonicalDirectoryFromSystemProperty(
+                    "maveniverse.toolrunner.installationDirectory", ".tooolrunner");
             this.tempDirectory = null;
             this.userAgent = null;
             this.httpHeaders = null;

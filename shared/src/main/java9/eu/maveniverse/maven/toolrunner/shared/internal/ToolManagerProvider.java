@@ -44,7 +44,7 @@ public class ToolManagerProvider implements ToolProvider {
     @Override
     public int run(PrintWriter out, PrintWriter err, String... args) {
         if (args.length < 2) {
-            throw new IllegalArgumentException("first argument must be ToolRunner tool name");
+            throw new IllegalArgumentException("There must be at least two arguments: <toolName> <command> [command args...]");
         }
         String toolName = args[0];
         String toolCommand = args[1];

@@ -78,7 +78,7 @@ public interface Config {
             this.allowPathDetection = Boolean.parseBoolean(
                     System.getProperty("maveniverse.toolrunner.allowPathDetection", Boolean.TRUE.toString()));
             this.installationDirectory = FileUtils.discoverCanonicalDirectoryFromSystemProperty(
-                    "maveniverse.toolrunner.installationDirectory", ".tooolrunner");
+                    "maveniverse.toolrunner.installationDirectory", ".toolrunner");
             this.tempDirectory = null;
             this.userAgent = null;
             this.httpHeaders = null;

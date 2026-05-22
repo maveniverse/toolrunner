@@ -9,12 +9,14 @@ package eu.maveniverse.maven.toolrunner.shared.internal;
 
 import eu.maveniverse.maven.toolrunner.shared.Config;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
+import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.spi.ToolProvider;
 
 /**
@@ -46,13 +48,26 @@ public class ToolManagerProvider implements ToolProvider {
         if (args.length < 2) {
             throw new IllegalArgumentException("There must be at least two arguments: <toolName> <command> [command args...]");
         }
-        String toolName = args[0];
+        String toolName;
+        String toolVersion;
+        if (args[0].contains("@")) {
+            toolName = args[0].substring(0, args[0].indexOf("@"));
+            toolVersion = args[0].substring(args[0].indexOf("@") + 1);
+        } else {
+            toolName = args[0];
+            toolVersion = null;
+        }
         String toolCommand = args[1];
         List<String> toolArgs = Arrays.asList(Arrays.copyOfRange(args, 2, args.length));
 
-        ToolHandle handle = toolManager.selectToolByName(toolName)
-                .orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s not found", toolName)))
-                .toolHandle();
+        ToolHandler handler = toolManager.selectToolByName(toolName).orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s not found", toolName)));
+        ToolHandle handle;
+        if (toolVersion != null) {
+            handle = handler.selectTool(Map.of(ToolHandler.TOOL_NAME, toolName, ToolHandler.TOOL_VERSION, toolVersion))
+                    .orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s@%s not found", toolName, toolVersion)));
+        } else {
+            handle = handler.toolHandle();
+        }
         ToolHandle.Result result =
                 handle.execute(handle.executionTemplate().command(toolCommand).arguments(toolArgs).build());
         if (!result.stdOutString().orElse("").trim().isEmpty()) {

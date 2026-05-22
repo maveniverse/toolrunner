@@ -7,7 +7,6 @@
  */
 package eu.maveniverse.maven.toolrunner.shared.internal;
 
-
 import eu.maveniverse.maven.toolrunner.shared.Config;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
@@ -18,6 +17,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.spi.ToolProvider;
 
+/**
+ * JDK ToolProvider that delegates to ToolManager. This allows to run tools from JDK Tool API, and delegate to
+ * ToolManager to select and execute supported tool. Because of this, the invocation is a bit different:
+ * <ul>
+ *     <li>ToolProvider name is "toolrunner"</li>
+ *     <li>First argument is the tool name</li>
+ *     <li>Second argument is the command of the tool</li>
+ *     <li>Rest of arguments are command arguments</li>
+ * </ul>
+ * Hence, there must be at least two arguments (tool name and command) when executing ToolRunner via this
+ * ToolProvider.
+ */
 public class ToolManagerProvider implements ToolProvider {
     private final ToolManager toolManager;
 

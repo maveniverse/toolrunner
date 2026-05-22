@@ -204,8 +204,8 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
     // ToolExecutor
 
     @Override
-    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
-        return Collections.singleton("minisign");
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singletonList("minisign");
     }
 
     @Override

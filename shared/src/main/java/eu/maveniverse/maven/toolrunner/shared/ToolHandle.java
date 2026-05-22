@@ -7,9 +7,9 @@
  */
 package eu.maveniverse.maven.toolrunner.shared;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * The Tool Handle: this handle represents single installation of tool.
@@ -27,12 +27,12 @@ public interface ToolHandle {
     Map<String, String> toolMetadata();
 
     /**
-     * The set of commands this tool supports. For example, it can be {@code "mvn"}, or {@code "mvnup"} in case of Maven 4
+     * The list of commands this tool supports. For example, it can be {@code "mvn"}, or {@code "mvnup"} in case of Maven 4
      * and so on. This set has at least one element and is never {@code null}. This instance of handle receives
      * in {@link #execute(ToolExecution)} only tool execution that refers to one of these commands from this set,
-     * otherwise throws.
+     * otherwise throws. The first element of list is considered the "default" command.
      */
-    Set<String> commands();
+    List<String> commands();
 
     /**
      * Simplest result, as interpreted by tool provider. The actual result may be much more than just this,

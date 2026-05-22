@@ -21,8 +21,8 @@ package eu.maveniverse.maven.toolrunner.shared.spi;
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents a tool executor.
@@ -33,7 +33,7 @@ public interface ToolExecutor {
      * This instance of handle receives in {@link #executeTool(ToolContext, Map, ToolExecution)} only tool
      * execution that refers to one of these commands from this set, otherwise throws.
      */
-    Set<String> commands(ToolContext context, Map<String, String> metadata);
+    List<String> commands(ToolContext context, Map<String, String> metadata);
 
     /**
      * Executes the tool with given execution. If tool was not detected, this call will install it as well, and then

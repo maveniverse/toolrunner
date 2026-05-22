@@ -235,8 +235,8 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
     // ToolExecutor
 
     @Override
-    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
-        return Collections.singleton("cosign");
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singletonList("cosign");
     }
 
     @Override

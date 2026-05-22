@@ -16,8 +16,8 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolExecutor;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class DefaultToolHandle implements ToolHandle {
     private final ToolContext toolContext;
@@ -36,7 +36,7 @@ public class DefaultToolHandle implements ToolHandle {
     }
 
     @Override
-    public Set<String> commands() {
+    public List<String> commands() {
         return toolExecutor.commands(toolContext, metadata);
     }
 

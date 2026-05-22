@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -76,13 +75,13 @@ public class JdkProvider implements ToolProvider, ToolDetector, ToolExecutor {
     // ToolExecutor
 
     @Override
-    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
-        // TODO:
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
         String home = metadata.get(JdkProvider.HOME);
         try (Stream<Path> command = Files.list(Paths.get(home).resolve("bin"))) {
             return command.map(p -> p.getFileName().toString())
+                    .filter(p -> !IS_WINDOWS || p.endsWith(".exe"))
                     .map(p -> IS_WINDOWS ? p.substring(0, p.length() - 4) : p)
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toList());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

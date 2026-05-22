@@ -195,8 +195,8 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
     // ToolExecutor
 
     @Override
-    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
-        return Collections.singleton("isx");
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singletonList("isx");
     }
 
     @Override

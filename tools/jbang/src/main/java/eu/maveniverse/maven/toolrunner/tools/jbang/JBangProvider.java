@@ -206,8 +206,8 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     // ToolExecutor
 
     @Override
-    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
-        return Collections.singleton("jbang");
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singletonList("jbang");
     }
 
     @Override

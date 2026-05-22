@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -50,8 +49,8 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
     static {
         Map<String, String> exe = new HashMap<>();
         exe.put("mvn", IS_WINDOWS ? "mvn.cmd" : "mvn");
-        exe.put("mvnenc", IS_WINDOWS ? "mvnenc.cmd" : "mvn");
-        exe.put("mvnup", IS_WINDOWS ? "mvnup.cmd" : "mvn");
+        exe.put("mvnenc", IS_WINDOWS ? "mvnenc.cmd" : "mvnenc");
+        exe.put("mvnup", IS_WINDOWS ? "mvnup.cmd" : "mvnup");
         EXE_NAMES = Collections.unmodifiableMap(exe);
     }
 
@@ -199,12 +198,12 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
     // ToolExecutor
 
     @Override
-    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
         String toolVersion = requireNonNull(metadata.get(ToolHandler.TOOL_VERSION));
         if (toolVersion.startsWith("3.")) {
-            return Collections.singleton("mvn");
+            return Collections.singletonList("mvn");
         } else {
-            return Collections.unmodifiableSet(new HashSet<>(Arrays.asList("mvn", "mvnup", "mvnenc")));
+            return Collections.unmodifiableList(Arrays.asList("mvn", "mvnup", "mvnenc"));
         }
     }
 

@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.maveniverse.maven.toolrunner.shared.Config;
+import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
@@ -48,7 +49,10 @@ public class MinisignProviderTest {
             // provision latest
             ToolHandle handle = handler.toolHandle();
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            handle.execute(handle.executionTemplate().argument("-v").stdOut(out).build());
+            handle.execute(ToolExecution.ofCommand("minisign")
+                    .argument("-v")
+                    .stdOut(out)
+                    .build());
             assertTrue(out.toString().trim().contains(handle.toolMetadata().get(ToolHandler.TOOL_VERSION)));
 
             // detect again, we should have one more provisioned

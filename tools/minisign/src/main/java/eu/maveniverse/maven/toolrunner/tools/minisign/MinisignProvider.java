@@ -117,13 +117,15 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("-v");
         // TODO: maybe collect more info?
         // $ minisign -v
         // minisign 0.12
         // $
         try {
-            ToolHandle.Result result = executeTool(context, metadata, exe.build());
+            ToolHandle.Result result = executeTool(
+                    context,
+                    metadata,
+                    ToolExecution.ofCommand("minisign").addArguments("-v").build());
             if (result.success()) {
                 String[] versions = result.stdOutString()
                         .orElseThrow(() -> new NoSuchElementException("No value present"))
@@ -202,21 +204,25 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
-        ToolExecution.Builder builder;
-        String home = metadata.get(HOME);
-        if (home != null) {
-            builder = ToolExecution.ofCommand(Paths.get(home).resolve(EXE_NAME).toString());
-        } else {
-            builder = ToolExecution.ofCommand(EXE_NAME);
-        }
-        return builder;
+    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singleton("minisign");
     }
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
+        if (metadata.containsKey(ToolHandler.TOOL_NAME) && metadata.containsKey(ToolHandler.TOOL_VERSION)) {
+            if (!commands(context, metadata).contains(execution.command())) {
+                throw new IllegalArgumentException("Unsupported command: " + execution.command());
+            }
+        }
+        String command = execution.command();
+        String home = metadata.get(MinisignProvider.HOME);
+        if (home != null) {
+            command = Paths.get(home).resolve(EXE_NAME).toString();
+        }
+        return ProcessBuilderExecutor.execute(
+                execution.toBuilder().command(command).build(), context.toolTimeout());
     }
 }

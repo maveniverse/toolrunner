@@ -120,7 +120,6 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(GradleProvider.HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("-v");
         // TODO: maybe collect more info?
         // $ gradle -v
         //
@@ -142,7 +141,10 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
         // $
 
         try {
-            ToolHandle.Result result = executeTool(context, metadata, exe.build());
+            ToolHandle.Result result = executeTool(
+                    context,
+                    metadata,
+                    ToolExecution.ofCommand("gradle").addArguments("-v").build());
             if (result.success()) {
                 String[] versions = result.stdOutString()
                         .orElseThrow(() -> new NoSuchElementException("No value present"))
@@ -205,26 +207,25 @@ public class GradleProvider implements ToolProvider, ToolDetector, ToolProvision
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
-        ToolExecution.Builder builder;
-        String home = metadata.get(GradleProvider.HOME);
-        if (home != null) {
-            builder = ToolExecution.ofCommand(Paths.get(home)
-                    .resolve("bin")
-                    .resolve(GradleProvider.EXE_NAME)
-                    .toString());
-            builder.environmentVariable(ENV_HOME, home);
-        } else {
-            builder = ToolExecution.ofCommand(GradleProvider.EXE_NAME);
-        }
-
-        return builder;
+    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singleton("gradle");
     }
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
+        if (metadata.containsKey(ToolHandler.TOOL_NAME) && metadata.containsKey(ToolHandler.TOOL_VERSION)) {
+            if (!commands(context, metadata).contains(execution.command())) {
+                throw new IllegalArgumentException("Unsupported command: " + execution.command());
+            }
+        }
+        String command = execution.command();
+        String home = metadata.get(GradleProvider.HOME);
+        if (home != null) {
+            command = Paths.get(home).resolve("bin").resolve(EXE_NAME).toString();
+        }
+        return ProcessBuilderExecutor.execute(
+                execution.toBuilder().command(command).build(), context.toolTimeout());
     }
 }

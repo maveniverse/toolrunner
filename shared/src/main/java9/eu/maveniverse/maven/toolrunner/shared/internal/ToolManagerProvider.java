@@ -8,6 +8,7 @@
 package eu.maveniverse.maven.toolrunner.shared.internal;
 
 import eu.maveniverse.maven.toolrunner.shared.Config;
+import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
@@ -64,8 +65,7 @@ public class ToolManagerProvider implements ToolProvider {
             } else {
                 handle = handler.toolHandle();
             }
-            ToolHandle.Result result = handle.execute(handle.executionTemplate()
-                    .command(toolCommand)
+            ToolHandle.Result result = handle.execute(ToolExecution.ofCommand(toolCommand)
                     .arguments(toolArgs)
                     .build());
             if (!result.stdOutString().orElse("").trim().isEmpty()) {
@@ -75,6 +75,9 @@ public class ToolManagerProvider implements ToolProvider {
                 err.println(result.stdErrString().orElse(""));
             }
             return result.exitCode().orElse(result.success() ? 0 : 1);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace(err);
+            return -2;
         } catch (IOException e) {
             e.printStackTrace(err);
             return -1;

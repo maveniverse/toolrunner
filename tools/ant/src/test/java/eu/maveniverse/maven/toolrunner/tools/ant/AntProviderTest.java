@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.maveniverse.maven.toolrunner.shared.Config;
+import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
@@ -47,7 +48,7 @@ public class AntProviderTest {
             // provision latest JBang
             ToolHandle handle = handler.toolHandle();
             ToolHandle.Result result = handle.execute(
-                    handle.executionTemplate().argument("-version").build());
+                    ToolExecution.ofCommand("ant").argument("-version").build());
             assertTrue(
                     result.stdOutString()
                             .orElse("")

@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.maveniverse.maven.toolrunner.shared.Config;
+import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
@@ -48,7 +49,7 @@ public class MavenProviderTest {
             // provision latest Maven
             ToolHandle handle = handler.toolHandle();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            handle.execute(handle.executionTemplate()
+            handle.execute(ToolExecution.ofCommand("mvn")
                     .addArguments("-v", "-q")
                     .stdOut(baos)
                     .build());

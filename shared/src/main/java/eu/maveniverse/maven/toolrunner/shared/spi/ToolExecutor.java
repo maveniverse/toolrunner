@@ -22,16 +22,18 @@ import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents a tool executor.
  */
 public interface ToolExecutor {
     /**
-     * Creates a "template" {@link ToolExecution} specific for this tool. Caller should set all the needed things,
-     * at least the arguments. This method never returns {@code null}.
+     * The set of commands this tool executor supports. This set has at least one element and is never {@code null}.
+     * This instance of handle receives in {@link #executeTool(ToolContext, Map, ToolExecution)} only tool
+     * execution that refers to one of these commands from this set, otherwise throws.
      */
-    ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata);
+    Set<String> commands(ToolContext context, Map<String, String> metadata);
 
     /**
      * Executes the tool with given execution. If tool was not detected, this call will install it as well, and then

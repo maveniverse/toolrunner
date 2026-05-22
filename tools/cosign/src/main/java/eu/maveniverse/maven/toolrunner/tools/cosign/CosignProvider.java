@@ -119,7 +119,6 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("version");
         // TODO: maybe collect more info?
         // $ cosign version
         //  ______   ______        _______. __    _______ .__   __.
@@ -140,7 +139,10 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
         //
         // $
         try {
-            ToolHandle.Result result = executeTool(context, metadata, exe.build());
+            ToolHandle.Result result = executeTool(
+                    context,
+                    metadata,
+                    ToolExecution.ofCommand("cosign").addArguments("version").build());
             if (result.success()) {
                 String version = new BufferedReader(new StringReader(result.stdOutString()
                                 .orElseThrow(() -> new NoSuchElementException("No value present"))))
@@ -233,21 +235,25 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
-        ToolExecution.Builder builder;
-        String home = metadata.get(HOME);
-        if (home != null) {
-            builder = ToolExecution.ofCommand(Paths.get(home).resolve(EXE_NAME).toString());
-        } else {
-            builder = ToolExecution.ofCommand(EXE_NAME);
-        }
-        return builder;
+    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singleton("cosign");
     }
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
+        if (metadata.containsKey(ToolHandler.TOOL_NAME) && metadata.containsKey(ToolHandler.TOOL_VERSION)) {
+            if (!commands(context, metadata).contains(execution.command())) {
+                throw new IllegalArgumentException("Unsupported command: " + execution.command());
+            }
+        }
+        String command = execution.command();
+        String home = metadata.get(CosignProvider.HOME);
+        if (home != null) {
+            command = Paths.get(home).resolve(EXE_NAME).toString();
+        }
+        return ProcessBuilderExecutor.execute(
+                execution.toBuilder().command(command).build(), context.toolTimeout());
     }
 }

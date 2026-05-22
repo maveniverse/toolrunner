@@ -99,7 +99,10 @@ public class RunMojo extends MojoSupport {
             } else {
                 handle = handler.toolHandle();
             }
-            ToolExecution.Builder execution = handle.executionTemplate()
+            ToolExecution.Builder execution = ToolExecution.ofCommand(
+                            command != null
+                                    ? command
+                                    : handle.commands().iterator().next())
                     .addArguments(arguments)
                     .cwd(mavenSession.getCurrentProject().getBasedir().toPath());
             if (command != null) {

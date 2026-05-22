@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.maveniverse.maven.toolrunner.shared.Config;
+import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
@@ -48,8 +49,10 @@ public class GradleProviderTest {
             // provision latest JBang
             ToolHandle handle = handler.toolHandle();
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            handle.execute(
-                    handle.executionTemplate().argument("-v").stdOut(baos).build());
+            handle.execute(ToolExecution.ofCommand("gradle")
+                    .argument("-v")
+                    .stdOut(baos)
+                    .build());
             assertTrue(
                     baos.toString().trim().contains(handle.toolMetadata().get(ToolHandler.TOOL_VERSION)),
                     baos.toString().trim());

@@ -27,8 +27,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -43,7 +45,16 @@ import org.eclipse.aether.artifact.Artifact;
 public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisioner, ToolExecutor {
     public static final String NAME = "maven";
 
-    private static final String EXE_NAME = IS_WINDOWS ? "mvn.cmd" : "mvn";
+    private static final Map<String, String> EXE_NAMES;
+
+    static {
+        Map<String, String> exe = new HashMap<>();
+        exe.put("mvn", IS_WINDOWS ? "mvn.cmd" : "mvn");
+        exe.put("mvnenc", IS_WINDOWS ? "mvnenc.cmd" : "mvn");
+        exe.put("mvnup", IS_WINDOWS ? "mvnup.cmd" : "mvn");
+        EXE_NAMES = Collections.unmodifiableMap(exe);
+    }
+
     private static final String PREFIX = NAME + ".";
 
     public static final String HOME = PREFIX + "home";
@@ -79,10 +90,10 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
         // detect from path; if allowed
         if (context.allowPathDetection()) {
             Set<Path> paths =
-                    IOTools.dereference(OSTools.which(MavenProvider.EXE_NAME).orElse(Collections.emptySet()));
+                    IOTools.dereference(OSTools.which(EXE_NAMES.get("mvn")).orElse(Collections.emptySet()));
             // consider only those ending with `bin/$EXE_NAME`
             for (Path executable : paths) {
-                if (executable.toString().replace("\\", "/").endsWith("/bin/" + MavenProvider.EXE_NAME)) {
+                if (executable.toString().replace("\\", "/").endsWith("/bin/" + EXE_NAMES.get("mvn"))) {
                     tryHome(context, executable.getParent().getParent()).ifPresent(detected::add);
                 }
             }
@@ -116,10 +127,11 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(MavenProvider.HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("-v", "-q");
-
         try {
-            ToolHandle.Result result = executeTool(context, metadata, exe.build());
+            ToolHandle.Result result = executeTool(
+                    context,
+                    metadata,
+                    ToolExecution.ofCommand("mvn").addArguments("-v", "-q").build());
             if (result.success()) {
                 HashMap<String, String> md = new HashMap<>();
                 md.put(ToolHandler.TOOL_NAME, NAME);
@@ -187,25 +199,33 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
-        ToolExecution.Builder builder;
-        String mavenHome = metadata.get(MavenProvider.HOME);
-        if (mavenHome != null) {
-            builder = ToolExecution.ofCommand(Paths.get(mavenHome)
-                    .resolve("bin")
-                    .resolve(MavenProvider.EXE_NAME)
-                    .toString());
+    public Set<String> commands(ToolContext context, Map<String, String> metadata) {
+        String toolVersion = requireNonNull(metadata.get(ToolHandler.TOOL_VERSION));
+        if (toolVersion.startsWith("3.")) {
+            return Collections.singleton("mvn");
         } else {
-            builder = ToolExecution.ofCommand(MavenProvider.EXE_NAME);
+            return Collections.unmodifiableSet(new HashSet<>(Arrays.asList("mvn", "mvnup", "mvnenc")));
         }
-
-        return builder;
     }
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
+        if (metadata.containsKey(ToolHandler.TOOL_NAME) && metadata.containsKey(ToolHandler.TOOL_VERSION)) {
+            if (!commands(context, metadata).contains(execution.command())) {
+                throw new IllegalArgumentException("Unsupported command: " + execution.command());
+            }
+        }
+        String command = execution.command();
+        String home = metadata.get(MavenProvider.HOME);
+        if (home != null) {
+            command = Paths.get(home)
+                    .resolve("bin")
+                    .resolve(EXE_NAMES.get(command))
+                    .toString();
+        }
+        return ProcessBuilderExecutor.execute(
+                execution.toBuilder().command(command).build(), context.toolTimeout());
     }
 }

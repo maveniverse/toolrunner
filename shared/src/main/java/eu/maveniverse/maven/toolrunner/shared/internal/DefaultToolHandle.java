@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class DefaultToolHandle implements ToolHandle {
     private final ToolContext toolContext;
@@ -35,8 +36,8 @@ public class DefaultToolHandle implements ToolHandle {
     }
 
     @Override
-    public ToolExecution.Builder executionTemplate() {
-        return toolExecutor.executionTemplate(toolContext, metadata);
+    public Set<String> commands() {
+        return toolExecutor.commands(toolContext, metadata);
     }
 
     @Override

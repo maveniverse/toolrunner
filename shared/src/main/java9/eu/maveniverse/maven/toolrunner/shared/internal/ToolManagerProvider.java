@@ -40,45 +40,73 @@ public class ToolManagerProvider implements ToolProvider {
 
     @Override
     public int run(PrintWriter out, PrintWriter err, String... args) {
-        if (args.length < 2) {
-            throw new IllegalArgumentException("There must be at least two arguments: <toolName> <command> [command args...]");
-        }
         try (ToolManager toolManager = ToolManager.create(Config.builder().build())) {
-            String toolName;
-            String toolVersion;
-            if (args[0].contains("@")) {
-                toolName = args[0].substring(0, args[0].indexOf("@"));
-                toolVersion = args[0].substring(args[0].indexOf("@") + 1);
-            } else {
-                toolName = args[0];
-                toolVersion = null;
-            }
-            String toolCommand = args[1];
-            List<String> toolArgs = Arrays.asList(Arrays.copyOfRange(args, 2, args.length));
+            if (args.length == 0) {
+                out.println("Usage: toolrunner [<tool-name>[@version] [command [arguments...]]]");
+                out.println("Available tools:");
+                toolManager.supportedToolNames().forEach(toolName -> out.println(" * " + toolName));
+                return 0;
+            } else if (args.length == 1) {
+                String toolName;
+                String toolVersion;
+                if (args[0].contains("@")) {
+                    toolName = args[0].substring(0, args[0].indexOf("@"));
+                    toolVersion = args[0].substring(args[0].indexOf("@") + 1);
+                } else {
+                    toolName = args[0];
+                    toolVersion = null;
+                }
+                ToolHandler handler = toolManager.selectToolByName(toolName)
+                        .orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s not found", toolName)));
+                ToolHandle handle;
+                if (toolVersion != null) {
+                    handle = handler.selectTool(Map.of(ToolHandler.TOOL_NAME, toolName, ToolHandler.TOOL_VERSION, toolVersion))
+                            .orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s@%s not found", toolName, toolVersion)));
+                } else {
+                    handle = handler.toolHandle();
+                }
 
-            ToolHandler handler = toolManager.selectToolByName(toolName)
-                    .orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s not found", toolName)));
-            ToolHandle handle;
-            if (toolVersion != null) {
-                handle = handler.selectTool(Map.of(ToolHandler.TOOL_NAME, toolName, ToolHandler.TOOL_VERSION, toolVersion))
-                        .orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s@%s not found", toolName, toolVersion)));
+                out.println("Usage: toolrunner [<tool-name>[@version] [command [arguments...]]]");
+                out.println("Available commands for " + toolName + (toolVersion != null ? "@" + toolVersion : "") + ":");
+                handle.commands().forEach(command -> out.println(" * " + command));
+                return 0;
             } else {
-                handle = handler.toolHandle();
+                String toolName;
+                String toolVersion;
+                if (args[0].contains("@")) {
+                    toolName = args[0].substring(0, args[0].indexOf("@"));
+                    toolVersion = args[0].substring(args[0].indexOf("@") + 1);
+                } else {
+                    toolName = args[0];
+                    toolVersion = null;
+                }
+                String toolCommand = args[1];
+                List<String> toolArgs = Arrays.asList(Arrays.copyOfRange(args, 2, args.length));
+
+                ToolHandler handler = toolManager.selectToolByName(toolName)
+                        .orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s not found", toolName)));
+                ToolHandle handle;
+                if (toolVersion != null) {
+                    handle = handler.selectTool(Map.of(ToolHandler.TOOL_NAME, toolName, ToolHandler.TOOL_VERSION, toolVersion))
+                            .orElseThrow(() -> new IllegalArgumentException(String.format("Tool %s@%s not found", toolName, toolVersion)));
+                } else {
+                    handle = handler.toolHandle();
+                }
+                ToolHandle.Result result = handle.execute(ToolExecution.ofCommand(toolCommand)
+                        .arguments(toolArgs)
+                        .build());
+                if (!result.stdOutString().orElse("").trim().isEmpty()) {
+                    out.println(result.stdOutString().orElse(""));
+                }
+                if (!result.stdErrString().orElse("").trim().isEmpty()) {
+                    err.println(result.stdErrString().orElse(""));
+                }
+                return result.exitCode().orElse(result.success() ? 0 : 1);
             }
-            ToolHandle.Result result = handle.execute(ToolExecution.ofCommand(toolCommand)
-                    .arguments(toolArgs)
-                    .build());
-            if (!result.stdOutString().orElse("").trim().isEmpty()) {
-                out.println(result.stdOutString().orElse(""));
-            }
-            if (!result.stdErrString().orElse("").trim().isEmpty()) {
-                err.println(result.stdErrString().orElse(""));
-            }
-            return result.exitCode().orElse(result.success() ? 0 : 1);
-        } catch (IllegalArgumentException e) {
+        } catch(IllegalArgumentException e){
             e.printStackTrace(err);
             return -2;
-        } catch (IOException e) {
+        } catch(IOException e){
             e.printStackTrace(err);
             return -1;
         }

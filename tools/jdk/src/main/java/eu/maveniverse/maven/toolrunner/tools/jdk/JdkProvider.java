@@ -91,11 +91,6 @@ public class JdkProvider implements ToolProvider, ToolDetector, ToolExecutor {
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        if (metadata.containsKey(ToolHandler.TOOL_NAME) && metadata.containsKey(ToolHandler.TOOL_VERSION)) {
-            if (!commands(context, metadata).contains(execution.command())) {
-                throw new IllegalArgumentException("Unsupported command: " + execution.command());
-            }
-        }
         String command = execution.command();
         String home = metadata.get(JdkProvider.HOME);
         if (home != null) {

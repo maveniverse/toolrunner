@@ -43,6 +43,10 @@ public class DefaultToolHandle implements ToolHandle {
     @Override
     public Result execute(ToolExecution execution) {
         try {
+            if (!commands().contains(execution.command())) {
+                throw new IllegalArgumentException(
+                        "Unsupported command: " + execution.command() + "; supported commands are: " + commands());
+            }
             return toolExecutor.executeTool(toolContext, metadata, execution);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

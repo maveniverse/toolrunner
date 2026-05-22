@@ -121,7 +121,6 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(IsxProvider.HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("--version");
         // TODO: maybe collect more info?
         // $ isx --version
         // incus-spawn 0.1.18 (e9870e9fe9bd8f55431d9ac9fe1a1939108c2464)
@@ -129,7 +128,10 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         // native (GraalVM 25.0.3)
 
         try {
-            ToolHandle.Result result = executeTool(context, metadata, exe.build());
+            ToolHandle.Result result = executeTool(
+                    context,
+                    metadata,
+                    ToolExecution.ofCommand("isx").addArguments("--version").build());
             if (result.success()) {
                 String[] versions = result.stdOutString()
                         .orElseThrow(() -> new NoSuchElementException("No value present"))
@@ -193,23 +195,20 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
-        ToolExecution.Builder builder;
-        String home = metadata.get(IsxProvider.HOME);
-        if (home != null) {
-            builder = ToolExecution.ofCommand(
-                    Paths.get(home).resolve(IsxProvider.EXE_NAME).toString());
-        } else {
-            builder = ToolExecution.ofCommand(IsxProvider.EXE_NAME);
-        }
-
-        return builder;
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singletonList("isx");
     }
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
+        String command = execution.command();
+        String home = metadata.get(IsxProvider.HOME);
+        if (home != null) {
+            command = Paths.get(home).resolve(EXE_NAME).toString();
+        }
+        return ProcessBuilderExecutor.execute(
+                execution.toBuilder().command(command).build(), context.toolTimeout());
     }
 }

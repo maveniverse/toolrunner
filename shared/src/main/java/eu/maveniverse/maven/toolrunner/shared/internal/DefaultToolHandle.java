@@ -16,6 +16,7 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolExecutor;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DefaultToolHandle implements ToolHandle {
@@ -35,13 +36,17 @@ public class DefaultToolHandle implements ToolHandle {
     }
 
     @Override
-    public ToolExecution.Builder executionTemplate() {
-        return toolExecutor.executionTemplate(toolContext, metadata);
+    public List<String> commands() {
+        return toolExecutor.commands(toolContext, metadata);
     }
 
     @Override
     public Result execute(ToolExecution execution) {
         try {
+            if (!commands().contains(execution.command())) {
+                throw new IllegalArgumentException(
+                        "Unsupported command: " + execution.command() + "; supported commands are: " + commands());
+            }
             return toolExecutor.executeTool(toolContext, metadata, execution);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

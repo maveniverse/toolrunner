@@ -7,6 +7,7 @@
  */
 package eu.maveniverse.maven.toolrunner.shared;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -26,10 +27,12 @@ public interface ToolHandle {
     Map<String, String> toolMetadata();
 
     /**
-     * Creates a "template" {@link ToolExecution} specific for this tool. Caller should set all the needed things,
-     * at least the arguments. This method never returns {@code null}.
+     * The list of commands this tool supports. For example, it can be {@code "mvn"}, or {@code "mvnup"} in case of Maven 4
+     * and so on. This set has at least one element and is never {@code null}. This instance of handle receives
+     * in {@link #execute(ToolExecution)} only tool execution that refers to one of these commands from this set,
+     * otherwise throws. The first element of list is considered the "default" command.
      */
-    ToolExecution.Builder executionTemplate();
+    List<String> commands();
 
     /**
      * Simplest result, as interpreted by tool provider. The actual result may be much more than just this,

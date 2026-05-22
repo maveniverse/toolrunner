@@ -16,12 +16,17 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvisioner;
 import eu.maveniverse.maven.toolrunner.shared.support.ProcessBuilderExecutor;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The JDK tool provider.
@@ -29,9 +34,7 @@ import java.util.Optional;
 public class JdkProvider implements ToolProvider, ToolDetector, ToolExecutor {
     public static final String NAME = "jdk";
 
-    private static final String EXE_NAME = IS_WINDOWS ? "java.exe" : "java";
     private static final String PREFIX = NAME + ".";
-
     public static final String HOME = PREFIX + "home";
 
     private static final String ENV_HOME = "JAVA_HOME";
@@ -72,26 +75,32 @@ public class JdkProvider implements ToolProvider, ToolDetector, ToolExecutor {
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
-        ToolExecution.Builder builder;
-        String javaHome = metadata.get(JdkProvider.HOME);
-        if (javaHome != null) {
-            builder = ToolExecution.ofCommand(Paths.get(javaHome)
-                            .resolve("bin")
-                            .resolve(JdkProvider.EXE_NAME)
-                            .toString())
-                    .environmentVariable(ENV_HOME, javaHome);
-        } else {
-            builder = ToolExecution.ofCommand(JdkProvider.EXE_NAME);
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        String home = metadata.get(JdkProvider.HOME);
+        try (Stream<Path> command = Files.list(Paths.get(home).resolve("bin"))) {
+            return command.map(p -> p.getFileName().toString())
+                    .filter(p -> !IS_WINDOWS || p.endsWith(".exe"))
+                    .map(p -> IS_WINDOWS ? p.substring(0, p.length() - 4) : p)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-
-        return builder;
     }
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
+        String command = execution.command();
+        String home = metadata.get(JdkProvider.HOME);
+        if (home != null) {
+            command = Paths.get(home).resolve("bin").resolve(exeName(command)).toString();
+        }
+        return ProcessBuilderExecutor.execute(
+                execution.toBuilder().command(command).build(), context.toolTimeout());
+    }
+
+    private String exeName(String command) {
+        return IS_WINDOWS ? command + ".exe" : command;
     }
 }

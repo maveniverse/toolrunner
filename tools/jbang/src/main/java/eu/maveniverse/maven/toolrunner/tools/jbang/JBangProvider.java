@@ -124,7 +124,6 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(JBangProvider.HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("version", "--verbose");
         // TODO: maybe collect more info?
         // $ jbang version --verbose
         // err:
@@ -141,7 +140,12 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
         // 0.138.0
 
         try {
-            ToolHandle.Result result = executeTool(context, metadata, exe.build());
+            ToolHandle.Result result = executeTool(
+                    context,
+                    metadata,
+                    ToolExecution.ofCommand("jbang")
+                            .addArguments("version", "--verbose")
+                            .build());
             if (result.success()) {
                 HashMap<String, String> md = new HashMap<>();
                 md.put(ToolHandler.TOOL_NAME, NAME);
@@ -202,34 +206,20 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
-        ToolExecution.Builder builder;
-        String home = metadata.get(JBangProvider.HOME);
-        if (home != null) {
-            builder = ToolExecution.ofCommand(Paths.get(home)
-                    .resolve("bin")
-                    .resolve(JBangProvider.EXE_NAME)
-                    .toString());
-            builder.environmentVariable(ENV_HOME, home);
-        } else {
-            builder = ToolExecution.ofCommand(JBangProvider.EXE_NAME);
-        }
-
-        if (metadata.containsKey(JBangProvider.CACHE)) {
-            builder.environmentVariable(ENV_CACHE_DIR, metadata.get(JBangProvider.CACHE));
-        }
-
-        if (metadata.containsKey(JBangProvider.CONFIG)) {
-            builder.environmentVariable(ENV_CONFIG, metadata.get(JBangProvider.CONFIG));
-        }
-
-        return builder;
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singletonList("jbang");
     }
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
+        String command = execution.command();
+        String home = metadata.get(JBangProvider.HOME);
+        if (home != null) {
+            command = Paths.get(home).resolve("bin").resolve(EXE_NAME).toString();
+        }
+        return ProcessBuilderExecutor.execute(
+                execution.toBuilder().command(command).build(), context.toolTimeout());
     }
 }

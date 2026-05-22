@@ -120,14 +120,15 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         // execute and discover information
         Map<String, String> metadata = new HashMap<>();
         metadata.put(AntProvider.HOME, home.toString());
-        ToolExecution.Builder exe = executionTemplate(context, metadata).addArguments("-version");
         // TODO: maybe collect more info?
         // $ ant -version
         // Apache Ant(TM) version 1.10.17 compiled on April 6 2026
         // $
-
         try {
-            ToolHandle.Result result = executeTool(context, metadata, exe.build());
+            ToolHandle.Result result = executeTool(
+                    context,
+                    metadata,
+                    ToolExecution.ofCommand("ant").addArguments("-version").build());
             if (result.success()) {
                 String[] versions = result.stdOutString()
                         .orElseThrow(() -> new NoSuchElementException("No value present"))
@@ -190,26 +191,20 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
     // ToolExecutor
 
     @Override
-    public ToolExecution.Builder executionTemplate(ToolContext context, Map<String, String> metadata) {
-        ToolExecution.Builder builder;
-        String jbangHome = metadata.get(AntProvider.HOME);
-        if (jbangHome != null) {
-            builder = ToolExecution.ofCommand(Paths.get(jbangHome)
-                    .resolve("bin")
-                    .resolve(AntProvider.EXE_NAME)
-                    .toString());
-            builder.environmentVariable(ENV_HOME, jbangHome);
-        } else {
-            builder = ToolExecution.ofCommand(AntProvider.EXE_NAME);
-        }
-
-        return builder;
+    public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        return Collections.singletonList("ant");
     }
 
     @Override
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
-        return ProcessBuilderExecutor.execute(execution, context.toolTimeout());
+        String command = execution.command();
+        String home = metadata.get(AntProvider.HOME);
+        if (home != null) {
+            command = Paths.get(home).resolve("bin").resolve(EXE_NAME).toString();
+        }
+        return ProcessBuilderExecutor.execute(
+                execution.toBuilder().command(command).build(), context.toolTimeout());
     }
 }

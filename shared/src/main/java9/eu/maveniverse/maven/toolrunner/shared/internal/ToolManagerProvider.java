@@ -55,8 +55,12 @@ public class ToolManagerProvider implements ToolProvider {
                 .toolHandle();
         ToolHandle.Result result =
                 handle.execute(handle.executionTemplate().command(toolCommand).arguments(toolArgs).build());
-        System.out.println(result.stdOutString().orElse(""));
+        if (!result.stdOutString().orElse("").trim().isEmpty()) {
+            System.out.println(result.stdOutString().orElse(""));
+        }
+        if (!result.stdErrString().orElse("").trim().isEmpty()) {
+            System.err.println(result.stdErrString().orElse(""));
+        }
         return result.exitCode().orElse(result.success() ? 0 : 1);
     }
-
 }

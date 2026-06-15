@@ -71,7 +71,7 @@
 
     <!-- Dependency versions -->
     <version.shared>0.2.5</version.shared>
-    <version.mima>2.4.45</version.mima>
+    <version.mima>2.4.46</version.mima>
     <version.maven>3.9.16</version.maven>
     <version.resolver>1.9.27</version.resolver>
     <version.mavenPluginTools>3.15.2</version.mavenPluginTools>

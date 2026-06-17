@@ -47,8 +47,8 @@ public interface ToolExecution {
     List<String> arguments();
 
     /**
-     * Returns the current working directory for the Maven execution.
-     * This is typically the directory from which Maven was invoked.
+     * Returns the current working directory for the execution.
+     * This is typically the directory from which command should be invoked.
      *
      * @return the current working directory path
      */
@@ -70,16 +70,16 @@ public interface ToolExecution {
     boolean grabOutputAsString();
 
     /**
-     * Optional provider for STD in of the Maven. If given, this provider will be piped into std input of
-     * Maven. The stream is closed once tool execution is finished.
+     * Optional provider for STD in of the command. If given, this provider will be piped into std input of
+     * command. The stream is closed once tool execution is finished.
      *
      * @return an Optional containing the stdin provider, or empty if not specified.
      */
     Optional<InputStream> stdIn();
 
     /**
-     * Optional consumer for STD out of the Maven. If given, this consumer will get all output from the std out of
-     * Maven. Note: whether consumer gets to consume anything depends on invocation arguments passed in
+     * Optional consumer for STD out of the command. If given, this consumer will get all output from the std out of
+     * command. Note: whether consumer gets to consume anything depends on invocation arguments passed in
      * {@link #arguments()}, as if log file is set, not much will go to stdout.
      * The stream is closed once tool execution is finished.
      *
@@ -88,8 +88,8 @@ public interface ToolExecution {
     Optional<OutputStream> stdOut();
 
     /**
-     * Optional consumer for STD err of the Maven. If given, this consumer will get all output from the std err of
-     * Maven. Note: whether consumer gets to consume anything depends on invocation arguments passed in
+     * Optional consumer for STD err of the command. If given, this consumer will get all output from the std err of
+     * command. Note: whether consumer gets to consume anything depends on invocation arguments passed in
      * {@link #arguments()}, as if log file is set, not much will go to stderr.
      *  The stream is closed once tool execution is finished.
      *

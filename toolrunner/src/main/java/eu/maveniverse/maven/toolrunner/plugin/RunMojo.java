@@ -31,14 +31,14 @@ public class RunMojo extends MojoSupport {
      * Optional: whether tool manager along with installation directory should be considered "transient" or not.
      * In case of transient, the tools that are provisioned are deleted upon manager is being closed.
      */
-    @Parameter(property = "toolrunner.isTransient", defaultValue = "true")
+    @Parameter(property = "toolrunner.isTransient", defaultValue = "false")
     private boolean isTransient;
 
     /**
      * Optional: whether tool detection should consider current use {@code $PATH} environment variable as well, to
      * detect tools.
      */
-    @Parameter(property = "toolrunner.allowOsPathEnvDetection", defaultValue = "false")
+    @Parameter(property = "toolrunner.allowOsPathEnvDetection", defaultValue = "true")
     private boolean allowOsPathEnvDetection;
 
     /**
@@ -79,12 +79,16 @@ public class RunMojo extends MojoSupport {
 
     @Override
     public void executeMojo() throws MojoExecutionException, MojoFailureException {
-        try (ToolManager toolManager = ToolManager.create(Config.builder()
-                .isTransient(isTransient)
-                .allowOsPathEnvDetection(allowOsPathEnvDetection)
-                .installationDirectory(installationDirectory != null ? installationDirectory.toPath() : null)
-                .tmpDirectory(tmpDirectory != null ? tmpDirectory.toPath() : null)
-                .build())) {
+        Config.Builder configBuilder =
+                Config.builder().isTransient(isTransient).allowOsPathEnvDetection(allowOsPathEnvDetection);
+        if (installationDirectory != null) {
+            configBuilder = configBuilder.installationDirectory(installationDirectory.toPath());
+        }
+        if (tmpDirectory != null) {
+            configBuilder = configBuilder.tmpDirectory(tmpDirectory.toPath());
+        }
+
+        try (ToolManager toolManager = ToolManager.create(configBuilder.build())) {
             ToolHandler handler = toolManager
                     .selectToolByName(toolName)
                     .orElseThrow(() -> new MojoExecutionException("Tool " + toolName + " not supported."));

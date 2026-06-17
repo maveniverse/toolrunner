@@ -30,9 +30,9 @@ public class AntProviderTest {
         // allowPathDetection = false (ignore user installed ones)
         try (ToolManager toolManager = ToolManager.create(Config.builder()
                 .installationDirectory(Paths.get("target/installation-directory"))
-                .tempDirectory(Paths.get("target/temp-directory"))
+                .tmpDirectory(Paths.get("target/temp-directory"))
                 .isTransient(true)
-                .allowPathDetection(false)
+                .allowOsPathEnvDetection(false)
                 .build())) {
             assertTrue(toolManager.supportedToolNames().contains(AntProvider.NAME));
 

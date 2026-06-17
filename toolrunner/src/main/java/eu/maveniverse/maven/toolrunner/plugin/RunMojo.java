@@ -38,8 +38,8 @@ public class RunMojo extends MojoSupport {
      * Optional: whether tool detection should consider current use {@code $PATH} environment variable as well, to
      * detect tools.
      */
-    @Parameter(property = "toolrunner.allowPathDetection", defaultValue = "false")
-    private boolean allowPathDetection;
+    @Parameter(property = "toolrunner.allowOsPathEnvDetection", defaultValue = "false")
+    private boolean allowOsPathEnvDetection;
 
     /**
      * Optional: sets default installation directory, if default is not good fit.
@@ -50,8 +50,8 @@ public class RunMojo extends MojoSupport {
     /**
      * Optional: sets default temporary directory, if default is not good fit.
      */
-    @Parameter(property = "toolrunner.tempDirectory")
-    private File tempDirectory;
+    @Parameter(property = "toolrunner.tmpDirectory")
+    private File tmpDirectory;
 
     /**
      * Mandatory: The tool name execution should invoke. Note: the tool provider should be added to plugin dependency.
@@ -81,9 +81,9 @@ public class RunMojo extends MojoSupport {
     public void executeMojo() throws MojoExecutionException, MojoFailureException {
         try (ToolManager toolManager = ToolManager.create(Config.builder()
                 .isTransient(isTransient)
-                .allowPathDetection(allowPathDetection)
+                .allowOsPathEnvDetection(allowOsPathEnvDetection)
                 .installationDirectory(installationDirectory != null ? installationDirectory.toPath() : null)
-                .tempDirectory(tempDirectory != null ? tempDirectory.toPath() : null)
+                .tmpDirectory(tmpDirectory != null ? tmpDirectory.toPath() : null)
                 .build())) {
             ToolHandler handler = toolManager
                     .selectToolByName(toolName)

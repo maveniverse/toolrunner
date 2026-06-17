@@ -80,16 +80,19 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
 
     @Override
     public ToolDetector toolDetector() {
+        checkClosed();
         return this;
     }
 
     @Override
     public Optional<ToolProvisioner> toolProvisioner() {
+        checkClosed();
         return Optional.of(this);
     }
 
     @Override
     public ToolExecutor toolExecutor() {
+        checkClosed();
         return this;
     }
 
@@ -97,6 +100,7 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
 
     @Override
     public List<Map<String, String>> detectTool(ToolContext context) throws IOException {
+        checkClosed();
         ArrayList<Map<String, String>> detected = new ArrayList<>();
 
         // detect from path; if allowed
@@ -166,6 +170,8 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
     @Override
     public Optional<Map<String, String>> provisionTool(ToolContext context, Map<String, String> metadata)
             throws IOException {
+        checkClosed();
+
         boolean isLatest = !metadata.containsKey(ToolHandler.TOOL_VERSION);
 
         String homePath;
@@ -213,6 +219,7 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
 
     @Override
     public List<String> commands(ToolContext context, Map<String, String> metadata) {
+        checkClosed();
         String toolVersion = requireNonNull(metadata.get(ToolHandler.TOOL_VERSION));
         if (toolVersion.startsWith("3.")) {
             return Collections.singletonList("mvn");
@@ -245,6 +252,7 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
     public ProcessBuilderExecutor.ProcessBuilderToolExecutorResult executeTool(
             ToolContext context, Map<String, String> metadata, ToolExecution execution)
             throws IOException, InterruptedException {
+        checkClosed();
         Path home = FileUtils.normalizePath(Paths.get(metadata.get(MavenProvider.HOME)));
         ExecutorHelper helper =
                 helpers.computeIfAbsent(home, p -> ExecutorHelper.forMavenInstallation(p, ExecutorHelper.Mode.AUTO));
@@ -257,17 +265,22 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
             reqBuilder.stdOut(execution.stdOut().orElse(null));
             reqBuilder.stdErr(execution.stdErr().orElse(null));
         }
-        ExecutorResult result;
-        String mode = execution.toolRunnerData().orElse(Collections.emptyMap()).get(MavenProvider.MODE);
-        if (mode == null) {
-            result = helper.execute(reqBuilder.build());
-        } else {
-            result = helper.execute(ExecutorHelper.Mode.valueOf(mode), reqBuilder.build());
-        }
+        ExecutorResult result = helper.execute(
+                ExecutorHelper.Mode.valueOf(execution
+                        .toolRunnerData()
+                        .orElse(Collections.emptyMap())
+                        .getOrDefault(MavenProvider.MODE, ExecutorHelper.Mode.AUTO.name())),
+                reqBuilder.build());
         return new ProcessBuilderExecutor.ProcessBuilderToolExecutorResult(
                 result.exitCode().orElse(result.success() ? 0 : 1),
                 result.stdOutString().orElse(null),
                 result.stdErrString().orElse(null));
+    }
+
+    private void checkClosed() {
+        if (closed.get()) {
+            throw new IllegalStateException("MavenProvider has been closed");
+        }
     }
 
     @Override

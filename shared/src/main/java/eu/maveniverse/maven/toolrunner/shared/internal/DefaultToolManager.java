@@ -112,12 +112,8 @@ public class DefaultToolManager implements ToolManager, ToolContext {
     @Override
     public void close() throws IOException {
         if (closed.compareAndSet(false, true)) {
-            try {
-                if (config.isTransient()) {
-                    FileUtils.deleteRecursively(config.installationDirectory());
-                }
-            } finally {
-                FileUtils.deleteRecursively(config.tmpDirectory());
+            if (config.isTransient()) {
+                FileUtils.deleteRecursively(config.installationDirectory());
             }
         }
     }

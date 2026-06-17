@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * The Configuration.
@@ -83,7 +84,8 @@ public interface Config {
         private Map<String, String> httpHeaders;
         private Duration maxRunDuration;
 
-        private boolean directoriesConfigured;
+        private boolean installationDirectoryConfigured;
+        private boolean tmpDirectoryConfigured;
 
         private Builder() {
             this.isTransient = false;
@@ -96,16 +98,23 @@ public interface Config {
             this.httpHeaders = null;
             this.maxRunDuration = null;
 
-            this.directoriesConfigured = false;
+            this.installationDirectoryConfigured = false;
+            this.tmpDirectoryConfigured = false;
         }
 
         public Builder isTransient(boolean isTransient) {
             this.isTransient = isTransient;
-            if (isTransient && !directoriesConfigured) {
+            if (isTransient && (!installationDirectoryConfigured || !tmpDirectoryConfigured)) {
                 // move directories under some random tmp directory
-                this.installationDirectory = FileUtils.canonicalPath(Paths.get(System.getProperty("java.io.tmpdir")))
-                        .resolve("toolrunner-" + System.currentTimeMillis());
-                this.tmpDirectory = installationDirectory.resolve("tmp");
+                Path transientInstallationDirectory = FileUtils.canonicalPath(
+                                Paths.get(System.getProperty("java.io.tmpdir")))
+                        .resolve("toolrunner-" + UUID.randomUUID());
+                if (!installationDirectoryConfigured) {
+                    this.installationDirectory = transientInstallationDirectory;
+                }
+                if (!tmpDirectoryConfigured) {
+                    this.tmpDirectory = this.installationDirectory.resolve("tmp");
+                }
             }
             return this;
         }
@@ -117,13 +126,16 @@ public interface Config {
 
         public Builder installationDirectory(Path installationDirectory) {
             this.installationDirectory = requireNonNull(installationDirectory);
-            this.directoriesConfigured = true;
+            this.installationDirectoryConfigured = true;
+            if (isTransient && !tmpDirectoryConfigured) {
+                this.tmpDirectory = this.installationDirectory.resolve("tmp");
+            }
             return this;
         }
 
         public Builder tmpDirectory(Path tmpDirectory) {
             this.tmpDirectory = requireNonNull(tmpDirectory);
-            this.directoriesConfigured = true;
+            this.tmpDirectoryConfigured = true;
             return this;
         }
 
@@ -138,6 +150,9 @@ public interface Config {
         }
 
         public Builder maxRunDuration(Duration maxRunDuration) {
+            if (maxRunDuration != null && (maxRunDuration.isZero() || maxRunDuration.isNegative())) {
+                throw new IllegalArgumentException("maxRunDuration must be positive");
+            }
             this.maxRunDuration = maxRunDuration;
             return this;
         }

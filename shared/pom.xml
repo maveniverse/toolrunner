@@ -87,6 +87,11 @@
       <groupId>io.takari</groupId>
       <artifactId>takari-archiver</artifactId>
     </dependency>
+    <!-- JSON -->
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>

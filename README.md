@@ -16,13 +16,13 @@ Build requirements:
 ## Supported tools
 
 - `ant` see https://ant.apache.org/ (1)
-- `cosign` see https://github.com/sigstore/cosign (1)
-- `gradle` see https://gradle.org/ (1)
+- `cosign` see https://github.com/sigstore/cosign
+- `gradle` see https://gradle.org/
 - `isx` see https://github.com/Sanne/incus-spawn (2)
 - `jbang` see https://github.com/jbangdev/jbang
 - `jdk` the `$JAVA_HOME/bin/*` tools (3)
 - `maven` see https://maven.apache.org/
-- `minisign` see https://github.com/jedisct1/minisign (1)
+- `minisign` see https://github.com/jedisct1/minisign
 
 Limitations:
 * (1) Real version discovery is not yet done, so when LATEST asked, right now a currently known "latest" version is used.

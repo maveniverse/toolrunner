@@ -79,7 +79,7 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
         ArrayList<Map<String, String>> detected = new ArrayList<>();
 
         // detect from path; if allowed
-        if (context.allowPathDetection()) {
+        if (context.config().allowOsPathEnvDetection()) {
             Set<Path> paths = IOTools.dereference(OSTools.which(EXE_NAME).orElse(Collections.emptySet()));
             // consider only those ending with `/$EXE_NAME`
             for (Path executable : paths) {
@@ -90,7 +90,7 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
         }
 
         // detect from installation directory (ie already installed)
-        try (Stream<Path> candidateDirectories = Files.list(context.installationDirectory())
+        try (Stream<Path> candidateDirectories = Files.list(context.config().installationDirectory())
                 .filter(Files::isDirectory)
                 .filter(p -> p.getFileName().toString().startsWith(NAME))) {
             candidateDirectories.forEach(p -> {
@@ -151,8 +151,8 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
             throws IOException {
         boolean isLatest = !metadata.containsKey(ToolHandler.TOOL_VERSION);
 
-        String version = null;
-        String clsext = "";
+        String version;
+        String clsext;
         if (Objects.equals("linux", context.detectedOs().get("name"))) {
             clsext = "linux.tar.gz";
         } else if (Objects.equals("windows", context.detectedOs().get("name"))
@@ -174,7 +174,7 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
         String uri = String.format(
                 "https://github.com/jedisct1/minisign/releases/download/%s/minisign-%s-%s", version, version, clsext);
         String homePath = NAME + "-" + version;
-        Path installDir = context.installationDirectory().resolve(homePath);
+        Path installDir = context.config().installationDirectory().resolve(homePath);
         try (FileUtils.TempFile dl = Provisioners.httpGet(context, "github.com", URI.create(uri))) {
             Provisioners.unpack(context, dl.getPath(), installDir, false);
         }
@@ -190,7 +190,8 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
         if (provisioned.isPresent()) {
             Map<String, String> provisionedMetadata =
                     new HashMap<>(provisioned.orElseThrow(() -> new NoSuchElementException("No value present")));
-            Path versionedInstallDir = context.installationDirectory()
+            Path versionedInstallDir = context.config()
+                    .installationDirectory()
                     .resolve(NAME + "-" + requireNonNull(provisionedMetadata.get(ToolHandler.TOOL_VERSION)));
             Files.move(installDir, versionedInstallDir, StandardCopyOption.REPLACE_EXISTING);
             provisionedMetadata.put(HOME, versionedInstallDir.toString());
@@ -218,6 +219,7 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
             command = Paths.get(home).resolve(EXE_NAME).toString();
         }
         return ProcessBuilderExecutor.execute(
-                execution.toBuilder().command(command).build(), context.toolTimeout());
+                execution.toBuilder().command(command).build(),
+                context.config().maxRunDuration().toMillis());
     }
 }

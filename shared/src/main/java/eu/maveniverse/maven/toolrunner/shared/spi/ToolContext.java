@@ -19,7 +19,7 @@
 package eu.maveniverse.maven.toolrunner.shared.spi;
 
 import eu.maveniverse.maven.mima.context.Context;
-import java.nio.file.Path;
+import eu.maveniverse.maven.toolrunner.shared.Config;
 import java.util.Map;
 
 /**
@@ -27,45 +27,14 @@ import java.util.Map;
  */
 public interface ToolContext {
     /**
-     * Returns the tool runner version.
+     * The current effective configuration.
      */
-    String toolRunnerVersion();
-
-    /**
-     * If true, tool providers are allowed to detect tools from path of current user.
-     */
-    boolean allowPathDetection();
-
-    /**
-     * Tool runner installation direction, where tools should be installed.
-     */
-    Path installationDirectory();
-
-    /**
-     * Tool runner temporary directory. Providers should use this path instead trying to detect Java System Property
-     * as Tool Runner may be embedded into something.
-     */
-    Path tempDirectory();
-
-    /**
-     * The user agent to use in case of HTTP provisioning.
-     */
-    String userAgent();
-
-    /**
-     * The extra HTTP headers to use in case of HTTP provisioning.
-     */
-    Map<String, String> httpHeaders();
+    Config config();
 
     /**
      * Creates MIMA context. Caller must make sure created context is closed.
      */
     Context createMimaContext();
-
-    /**
-     * The timeout in milliseconds, that tool has allowed to run.
-     */
-    long toolTimeout();
 
     /**
      * OS detected properties.

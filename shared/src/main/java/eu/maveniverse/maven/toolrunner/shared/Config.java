@@ -7,11 +7,17 @@
  */
 package eu.maveniverse.maven.toolrunner.shared;
 
+import static java.util.Objects.requireNonNull;
+
 import eu.maveniverse.maven.shared.core.fs.FileUtils;
+import eu.maveniverse.maven.shared.core.maven.MavenUtils;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.UUID;
 
 /**
  * The Configuration.
@@ -19,42 +25,48 @@ import java.util.concurrent.TimeUnit;
 public interface Config {
     /**
      * If {@code true}, the manager should be considered transient, and will clean up once closed (remove all
-     * installations happened during lifetime of it).
+     * installations happened during lifetime of it). Default value is {@code false}.
      */
     boolean isTransient();
 
     /**
-     * If {@code true}, the tool providers are allowed to discover tools from path too. Otherwise, only the
-     * {@link #installationDirectory()} is allowed.
+     * If {@code true}, the tool providers are allowed to discover tools from OS path environment too. Otherwise, only the
+     * {@link #installationDirectory()} is allowed. Default value is {@code true}.
      */
-    boolean allowPathDetection();
+    boolean allowOsPathEnvDetection();
+
+    /**
+     * Returns the version of the toolrunner.
+     */
+    String toolRunnerVersion();
 
     /**
      * The directory where tools should be provisioned.
+     * If {@link #isTransient()}, upon closing tool manager, this directory will be deleted.
      */
-    Optional<Path> installationDirectory();
+    Path installationDirectory();
 
     /**
      * The directory where temporary stuff should go.
+     * If {@link #isTransient()}, upon closing tool manager, this directory will be deleted.
      */
-    Optional<Path> tempDirectory();
+    Path tmpDirectory();
 
     /**
      * In case of download, the HTTP User Agent header to use. This value will override potentially
      * present {@code User-Agent} value present in {@link #httpHeaders()}.
      */
-    Optional<String> userAgent();
+    String userAgent();
 
     /**
      * Optional HTTP headers to use for HTTP requests.
-     * Never returns {@code null}.
      */
-    Optional<Map<String, String>> httpHeaders();
+    Map<String, String> httpHeaders();
 
     /**
-     * The timeout to run tool, or in other words, the maximum runtime of the tool. By default, 60 minutes.
+     * The maximum allowed duration to run tool, or in other words, the maximum runtime of the tool. By default, 60 minutes.
      */
-    Optional<Long> timeout();
+    Duration maxRunDuration();
 
     /**
      * Creates new empty builder.
@@ -65,96 +77,127 @@ public interface Config {
 
     class Builder {
         private boolean isTransient;
-        private boolean allowPathDetection;
+        private boolean allowOsPathEnvDetection;
         private Path installationDirectory;
-        private Path tempDirectory;
+        private Path tmpDirectory;
         private String userAgent;
         private Map<String, String> httpHeaders;
-        private Long timeout;
+        private Duration maxRunDuration;
+
+        private boolean installationDirectoryConfigured;
+        private boolean tmpDirectoryConfigured;
 
         private Builder() {
-            this.isTransient = Boolean.parseBoolean(
-                    System.getProperty("maveniverse.toolrunner.isTransient", Boolean.FALSE.toString()));
-            this.allowPathDetection = Boolean.parseBoolean(
-                    System.getProperty("maveniverse.toolrunner.allowPathDetection", Boolean.TRUE.toString()));
+            this.isTransient = false;
+            this.allowOsPathEnvDetection = true;
             this.installationDirectory = FileUtils.discoverCanonicalDirectoryFromSystemProperty(
                     "maveniverse.toolrunner.installationDirectory", ".toolrunner");
-            this.tempDirectory = null;
+            this.tmpDirectory = FileUtils.discoverCanonicalDirectoryFromSystemProperty(
+                    "maveniverse.toolrunner.tmpDirectory", ".toolrunner/tmp");
             this.userAgent = null;
             this.httpHeaders = null;
-            this.timeout = null;
+            this.maxRunDuration = null;
+
+            this.installationDirectoryConfigured = false;
+            this.tmpDirectoryConfigured = false;
         }
 
         public Builder isTransient(boolean isTransient) {
             this.isTransient = isTransient;
+            if (isTransient && (!installationDirectoryConfigured || !tmpDirectoryConfigured)) {
+                // move directories under some random tmp directory
+                Path transientInstallationDirectory = FileUtils.canonicalPath(
+                                Paths.get(System.getProperty("java.io.tmpdir")))
+                        .resolve("toolrunner-" + UUID.randomUUID());
+                if (!installationDirectoryConfigured) {
+                    this.installationDirectory = transientInstallationDirectory;
+                }
+                if (!tmpDirectoryConfigured) {
+                    this.tmpDirectory = this.installationDirectory.resolve("tmp");
+                }
+            }
             return this;
         }
 
-        public Builder allowPathDetection(boolean allowPathDetection) {
-            this.allowPathDetection = allowPathDetection;
+        public Builder allowOsPathEnvDetection(boolean allowOsPathEnvDetection) {
+            this.allowOsPathEnvDetection = allowOsPathEnvDetection;
             return this;
         }
 
         public Builder installationDirectory(Path installationDirectory) {
-            this.installationDirectory = installationDirectory;
+            this.installationDirectory = requireNonNull(installationDirectory);
+            this.installationDirectoryConfigured = true;
+            if (isTransient && !tmpDirectoryConfigured) {
+                this.tmpDirectory = this.installationDirectory.resolve("tmp");
+            }
             return this;
         }
 
-        public Builder tempDirectory(Path tempDirectory) {
-            this.tempDirectory = tempDirectory;
+        public Builder tmpDirectory(Path tmpDirectory) {
+            this.tmpDirectory = requireNonNull(tmpDirectory);
+            this.tmpDirectoryConfigured = true;
             return this;
         }
 
         public Builder userAgent(String userAgent) {
-            this.userAgent = userAgent;
+            this.userAgent = requireNonNull(userAgent);
             return this;
         }
 
         public Builder httpHeaders(Map<String, String> httpHeaders) {
-            this.httpHeaders = httpHeaders;
+            this.httpHeaders = httpHeaders == null ? Collections.emptyMap() : httpHeaders;
             return this;
         }
 
-        public Builder timeout(long timeout, TimeUnit timeUnit) {
-            this.timeout = timeUnit.toMillis(timeout);
+        public Builder maxRunDuration(Duration maxRunDuration) {
+            if (maxRunDuration != null && (maxRunDuration.isZero() || maxRunDuration.isNegative())) {
+                throw new IllegalArgumentException("maxRunDuration must be positive");
+            }
+            this.maxRunDuration = maxRunDuration;
             return this;
         }
 
         public Config build() {
             return new Impl(
                     isTransient,
-                    allowPathDetection,
+                    allowOsPathEnvDetection,
                     installationDirectory,
-                    tempDirectory,
+                    tmpDirectory,
                     userAgent,
                     httpHeaders,
-                    timeout);
+                    maxRunDuration);
         }
 
         private static class Impl implements Config {
             private final boolean isTransient;
-            private final boolean allowPathDetection;
+            private final boolean allowOsPathEnvDetection;
+            private final String toolRunnerVersion;
             private final Path installationDirectory;
-            private final Path tempDirectory;
+            private final Path tmpDirectory;
             private final String userAgent;
             private final Map<String, String> httpHeaders;
-            private final Long timeout;
+            private final Duration maxRunDuration;
 
             private Impl(
                     boolean isTransient,
-                    boolean allowPathDetection,
+                    boolean allowOsPathEnvDetection,
                     Path installationDirectory,
-                    Path tempDirectory,
+                    Path tmpDirectory,
                     String userAgent,
                     Map<String, String> httpHeaders,
-                    Long timeout) {
+                    Duration maxRunDuration) {
+                this.toolRunnerVersion = MavenUtils.discoverArtifactVersion(
+                        getClass().getClassLoader(), "eu.maveniverse.maven.toolrunner", "shared", "UNKNOWN");
+
                 this.isTransient = isTransient;
-                this.allowPathDetection = allowPathDetection;
-                this.installationDirectory = installationDirectory;
-                this.tempDirectory = tempDirectory;
-                this.userAgent = userAgent;
-                this.httpHeaders = httpHeaders;
-                this.timeout = timeout;
+                this.allowOsPathEnvDetection = allowOsPathEnvDetection;
+                this.installationDirectory = FileUtils.normalizePath(installationDirectory);
+                this.tmpDirectory = FileUtils.normalizePath(tmpDirectory);
+                this.userAgent = userAgent == null ? "ToolRunner/" + this.toolRunnerVersion : userAgent;
+                this.httpHeaders = httpHeaders == null
+                        ? Collections.emptyMap()
+                        : Collections.unmodifiableMap(new HashMap<>(httpHeaders));
+                this.maxRunDuration = maxRunDuration == null ? Duration.ofHours(1L) : maxRunDuration;
             }
 
             @Override
@@ -163,33 +206,37 @@ public interface Config {
             }
 
             @Override
-            public boolean allowPathDetection() {
-                return allowPathDetection;
+            public boolean allowOsPathEnvDetection() {
+                return allowOsPathEnvDetection;
+            }
+
+            public String toolRunnerVersion() {
+                return toolRunnerVersion;
             }
 
             @Override
-            public Optional<Path> installationDirectory() {
-                return Optional.ofNullable(installationDirectory);
+            public Path installationDirectory() {
+                return installationDirectory;
             }
 
             @Override
-            public Optional<Path> tempDirectory() {
-                return Optional.ofNullable(tempDirectory);
+            public Path tmpDirectory() {
+                return tmpDirectory;
             }
 
             @Override
-            public Optional<String> userAgent() {
-                return Optional.ofNullable(userAgent);
+            public String userAgent() {
+                return userAgent;
             }
 
             @Override
-            public Optional<Map<String, String>> httpHeaders() {
-                return Optional.ofNullable(httpHeaders);
+            public Map<String, String> httpHeaders() {
+                return httpHeaders;
             }
 
             @Override
-            public Optional<Long> timeout() {
-                return Optional.ofNullable(timeout);
+            public Duration maxRunDuration() {
+                return maxRunDuration;
             }
         }
     }

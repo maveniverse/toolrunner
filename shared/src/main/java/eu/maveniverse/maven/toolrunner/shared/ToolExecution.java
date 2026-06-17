@@ -98,6 +98,11 @@ public interface ToolExecution {
     Optional<OutputStream> stdErr();
 
     /**
+     * Metadata; optional extra data for tool runner (for example to parameterize how to perform invocations).
+     */
+    Optional<Map<String, String>> toolRunnerData();
+
+    /**
      * Returns {@link Builder} created from this instance.
      */
     default Builder toBuilder() {
@@ -109,7 +114,8 @@ public interface ToolExecution {
                 grabOutputAsString(),
                 stdIn().orElse(null),
                 stdOut().orElse(null),
-                stdErr().orElse(null));
+                stdErr().orElse(null),
+                toolRunnerData().orElse(null));
     }
 
     /**
@@ -117,7 +123,7 @@ public interface ToolExecution {
      */
     static Builder ofCommand(String command) {
         return new Builder(
-                command, null, FileUtils.discoverUserCurrentWorkingDirectory(), null, true, null, null, null);
+                command, null, FileUtils.discoverUserCurrentWorkingDirectory(), null, true, null, null, null, null);
     }
 
     class Builder {
@@ -129,6 +135,7 @@ public interface ToolExecution {
         private InputStream stdIn;
         private OutputStream stdOut;
         private OutputStream stdErr;
+        private Map<String, String> toolRunnerData;
 
         private Builder() {}
 
@@ -140,7 +147,8 @@ public interface ToolExecution {
                 boolean grabOutputAsString,
                 InputStream stdIn,
                 OutputStream stdOut,
-                OutputStream stdErr) {
+                OutputStream stdErr,
+                Map<String, String> toolRunnerData) {
             this.command = command;
             this.arguments = arguments;
             this.cwd = cwd;
@@ -149,6 +157,7 @@ public interface ToolExecution {
             this.stdIn = stdIn;
             this.stdOut = stdOut;
             this.stdErr = stdErr;
+            this.toolRunnerData = toolRunnerData;
         }
 
         public Builder command(String command) {
@@ -218,8 +227,32 @@ public interface ToolExecution {
             return this;
         }
 
+        public Builder toolRunnerData(Map<String, String> toolRunnerData) {
+            this.toolRunnerData = toolRunnerData;
+            return this;
+        }
+
+        public Builder toolRunnerData(String key, String value) {
+            requireNonNull(key, "key");
+            requireNonNull(value, "value");
+            if (toolRunnerData == null) {
+                this.toolRunnerData = new HashMap<>();
+            }
+            this.toolRunnerData.put(key, value);
+            return this;
+        }
+
         public ToolExecution build() {
-            return new Impl(command, arguments, cwd, environmentVariables, grabOutputAsString, stdIn, stdOut, stdErr);
+            return new Impl(
+                    command,
+                    arguments,
+                    cwd,
+                    environmentVariables,
+                    grabOutputAsString,
+                    stdIn,
+                    stdOut,
+                    stdErr,
+                    toolRunnerData);
         }
 
         private static class Impl implements ToolExecution {
@@ -231,6 +264,7 @@ public interface ToolExecution {
             private final InputStream stdIn;
             private final OutputStream stdOut;
             private final OutputStream stdErr;
+            private final Map<String, String> toolRunnerData;
 
             private Impl(
                     String command,
@@ -240,7 +274,8 @@ public interface ToolExecution {
                     boolean grabOutputAsString,
                     InputStream stdIn,
                     OutputStream stdOut,
-                    OutputStream stdErr) {
+                    OutputStream stdErr,
+                    Map<String, String> toolRunnerData) {
                 this.command = requireNonNull(command);
                 this.arguments = arguments == null ? Collections.emptyList() : new ArrayList<>(arguments);
                 this.cwd = requireNonNull(cwd);
@@ -251,6 +286,9 @@ public interface ToolExecution {
                 this.stdIn = stdIn;
                 this.stdOut = stdOut;
                 this.stdErr = stdErr;
+                this.toolRunnerData = toolRunnerData == null || toolRunnerData.isEmpty()
+                        ? null
+                        : Collections.unmodifiableMap(new HashMap<>(toolRunnerData));
             }
 
             @Override
@@ -291,6 +329,11 @@ public interface ToolExecution {
             @Override
             public Optional<OutputStream> stdErr() {
                 return Optional.ofNullable(stdErr);
+            }
+
+            @Override
+            public Optional<Map<String, String>> toolRunnerData() {
+                return Optional.ofNullable(toolRunnerData);
             }
 
             @Override

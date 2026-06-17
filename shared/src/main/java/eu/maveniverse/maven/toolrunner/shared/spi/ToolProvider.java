@@ -18,13 +18,15 @@
  */
 package eu.maveniverse.maven.toolrunner.shared.spi;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.Optional;
 
 /**
  * Represents a tool specific provider.
  */
-public interface ToolProvider {
+public interface ToolProvider extends Closeable {
     /**
      * Flag for detection of Windows OS.
      */
@@ -41,4 +43,9 @@ public interface ToolProvider {
     Optional<ToolProvisioner> toolProvisioner();
 
     ToolExecutor toolExecutor();
+
+    @Override
+    default void close() throws IOException {
+        // override if needed
+    }
 }

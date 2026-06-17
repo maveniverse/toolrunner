@@ -82,7 +82,7 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         ArrayList<Map<String, String>> detected = new ArrayList<>();
 
         // detect from path; if allowed
-        if (context.allowPathDetection()) {
+        if (context.config().allowOsPathEnvDetection()) {
             Set<Path> paths =
                     IOTools.dereference(OSTools.which(IsxProvider.EXE_NAME).orElse(Collections.emptySet()));
             // consider only those ending with `bin/$EXE_NAME`
@@ -94,7 +94,7 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         }
 
         // detect from installation directory (ie already installed)
-        try (Stream<Path> candidateDirectories = Files.list(context.installationDirectory())
+        try (Stream<Path> candidateDirectories = Files.list(context.config().installationDirectory())
                 .filter(Files::isDirectory)
                 .filter(p -> p.getFileName().toString().startsWith(NAME))) {
             candidateDirectories.forEach(p -> {
@@ -160,7 +160,7 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
             return Optional.empty();
         }
         // this is very new tool, we just go for latest
-        Path installDir = context.installationDirectory().resolve(NAME);
+        Path installDir = context.config().installationDirectory().resolve(NAME);
 
         boolean installationSuccess;
         try (FileUtils.TempFile dl = Provisioners.httpGet(
@@ -169,8 +169,9 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
                     .addArguments(dl.getPath().toString())
                     .environmentVariable("INSTALL_DIR", installDir.toString())
                     .build();
-            installationSuccess =
-                    ProcessBuilderExecutor.execute(cmd, context.toolTimeout()).success();
+            installationSuccess = ProcessBuilderExecutor.execute(
+                            cmd, context.config().maxRunDuration().toMillis())
+                    .success();
             // TODO: log
         } catch (InterruptedException e) {
             throw new IOException("Provisioning interrupted", e);
@@ -180,7 +181,8 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
             if (provisioned.isPresent()) {
                 Map<String, String> provisionedMetadata =
                         new HashMap<>(provisioned.orElseThrow(() -> new NoSuchElementException("No value present")));
-                Path versionedInstallDir = context.installationDirectory()
+                Path versionedInstallDir = context.config()
+                        .installationDirectory()
                         .resolve(NAME + "-" + requireNonNull(provisionedMetadata.get(ToolHandler.TOOL_VERSION)));
                 Files.move(installDir, versionedInstallDir, StandardCopyOption.REPLACE_EXISTING);
                 provisionedMetadata.put(HOME, versionedInstallDir.toString());
@@ -209,6 +211,7 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
             command = Paths.get(home).resolve(EXE_NAME).toString();
         }
         return ProcessBuilderExecutor.execute(
-                execution.toBuilder().command(command).build(), context.toolTimeout());
+                execution.toBuilder().command(command).build(),
+                context.config().maxRunDuration().toMillis());
     }
 }

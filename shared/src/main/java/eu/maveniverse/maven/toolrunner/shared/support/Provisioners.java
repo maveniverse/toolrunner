@@ -181,13 +181,13 @@ public final class Provisioners {
 
             try (CloseableHttpClient client = builder.build()) {
                 HttpGet httpGet = new HttpGet(resourceUri);
-                toolContext.httpHeaders().forEach(httpGet::addHeader);
-                httpGet.addHeader(HTTP.USER_AGENT, toolContext.userAgent());
+                toolContext.config().httpHeaders().forEach(httpGet::addHeader);
+                httpGet.addHeader(HTTP.USER_AGENT, toolContext.config().userAgent());
                 try (CloseableHttpResponse response = client.execute(httpGet)) {
                     HttpEntity entity = response.getEntity();
                     if (entity != null) {
-                        FileUtils.TempFile result =
-                                FileUtils.newTempFile(toolContext.tempDirectory(), detectExtension(resourceUri));
+                        FileUtils.TempFile result = FileUtils.newTempFile(
+                                toolContext.config().tmpDirectory(), detectExtension(resourceUri));
                         try (OutputStream out = Files.newOutputStream(result.getPath())) {
                             entity.writeTo(out);
                         }

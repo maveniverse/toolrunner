@@ -85,7 +85,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
         ArrayList<Map<String, String>> detected = new ArrayList<>();
 
         // detect from path; if allowed
-        if (context.allowPathDetection()) {
+        if (context.config().allowOsPathEnvDetection()) {
             Set<Path> paths =
                     IOTools.dereference(OSTools.which(JBangProvider.EXE_NAME).orElse(Collections.emptySet()));
             // consider only those ending with `bin/$EXE_NAME`
@@ -97,7 +97,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
         }
 
         // detect from installation directory (ie already installed)
-        try (Stream<Path> candidateDirectories = Files.list(context.installationDirectory())
+        try (Stream<Path> candidateDirectories = Files.list(context.config().installationDirectory())
                 .filter(Files::isDirectory)
                 .filter(p -> p.getFileName().toString().startsWith(NAME))) {
             candidateDirectories.forEach(p -> {
@@ -182,7 +182,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
                     "https://github.com/jbangdev/jbang/releases/download/v%s/jbang-%s.zip", version, version);
             homePath = NAME + "-" + version;
         }
-        Path installDir = context.installationDirectory().resolve(homePath);
+        Path installDir = context.config().installationDirectory().resolve(homePath);
         try (FileUtils.TempFile dl = Provisioners.httpGet(context, "github", URI.create(uri))) {
             Provisioners.unpack(context, dl.getPath(), installDir, false);
         }
@@ -191,7 +191,8 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
             Map<String, String> provisionedMetadata =
                     new HashMap<>(provisioned.orElseThrow(() -> new NoSuchElementException("No value present")));
             if (version == null) {
-                Path versionedInstallDir = context.installationDirectory()
+                Path versionedInstallDir = context.config()
+                        .installationDirectory()
                         .resolve(NAME + "-" + requireNonNull(provisionedMetadata.get(ToolHandler.TOOL_VERSION)));
                 Files.move(installDir, versionedInstallDir, StandardCopyOption.REPLACE_EXISTING);
                 provisionedMetadata.put(HOME, versionedInstallDir.toString());
@@ -220,6 +221,7 @@ public class JBangProvider implements ToolProvider, ToolDetector, ToolProvisione
             command = Paths.get(home).resolve("bin").resolve(EXE_NAME).toString();
         }
         return ProcessBuilderExecutor.execute(
-                execution.toBuilder().command(command).build(), context.toolTimeout());
+                execution.toBuilder().command(command).build(),
+                context.config().maxRunDuration().toMillis());
     }
 }

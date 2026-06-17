@@ -81,7 +81,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
         ArrayList<Map<String, String>> detected = new ArrayList<>();
 
         // detect from path; if allowed
-        if (context.allowPathDetection()) {
+        if (context.config().allowOsPathEnvDetection()) {
             Set<Path> paths = IOTools.dereference(OSTools.which(EXE_NAME).orElse(Collections.emptySet()));
             // consider only those ending with `/$EXE_NAME`
             for (Path executable : paths) {
@@ -92,7 +92,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
         }
 
         // detect from installation directory (ie already installed)
-        try (Stream<Path> candidateDirectories = Files.list(context.installationDirectory())
+        try (Stream<Path> candidateDirectories = Files.list(context.config().installationDirectory())
                 .filter(Files::isDirectory)
                 .filter(p -> p.getFileName().toString().startsWith(NAME))) {
             candidateDirectories.forEach(p -> {
@@ -218,7 +218,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
         String uri = String.format(
                 "https://github.com/sigstore/cosign/releases/download/v%s/cosign-%s-%s%s", version, osName, arch, ext);
         String homePath = NAME + "-" + version;
-        Path installDir = context.installationDirectory().resolve(homePath);
+        Path installDir = context.config().installationDirectory().resolve(homePath);
         Path executable = installDir.resolve(EXE_NAME);
         try (FileUtils.TempFile dl = Provisioners.httpGet(context, "github.com", URI.create(uri))) {
             Files.createDirectories(executable.getParent());
@@ -252,6 +252,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
             command = Paths.get(home).resolve(EXE_NAME).toString();
         }
         return ProcessBuilderExecutor.execute(
-                execution.toBuilder().command(command).build(), context.toolTimeout());
+                execution.toBuilder().command(command).build(),
+                context.config().maxRunDuration().toMillis());
     }
 }

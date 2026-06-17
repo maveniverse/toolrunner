@@ -87,7 +87,7 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
         ArrayList<Map<String, String>> detected = new ArrayList<>();
 
         // detect from path; if allowed
-        if (context.allowPathDetection()) {
+        if (context.config().allowOsPathEnvDetection()) {
             Set<Path> paths =
                     IOTools.dereference(OSTools.which(EXE_NAMES.get("mvn")).orElse(Collections.emptySet()));
             // consider only those ending with `bin/$EXE_NAME`
@@ -99,7 +99,7 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
         }
 
         // detect from installation directory (ie already installed)
-        try (Stream<Path> candidateDirectories = Files.list(context.installationDirectory())
+        try (Stream<Path> candidateDirectories = Files.list(context.config().installationDirectory())
                 .filter(Files::isDirectory)
                 .filter(p -> p.getFileName().toString().startsWith(NAME))) {
             candidateDirectories.forEach(p -> {
@@ -164,7 +164,7 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
             version = requireNonNull(metadata.get(ToolHandler.TOOL_VERSION));
             homePath = NAME + "-" + version;
         }
-        Path installDir = context.installationDirectory().resolve(homePath);
+        Path installDir = context.config().installationDirectory().resolve(homePath);
         Optional<Artifact> maybeDistro =
                 Provisioners.resolveArtifact(context, "org.apache.maven:apache-maven:zip:bin:" + version);
         if (maybeDistro.isPresent()) {
@@ -181,7 +181,8 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
                 Map<String, String> provisionedMetadata =
                         new HashMap<>(provisioned.orElseThrow(() -> new NoSuchElementException("No value present")));
                 if (Provisioners.RELEASE_VERSION.equals(version)) {
-                    Path versionedInstallDir = context.installationDirectory()
+                    Path versionedInstallDir = context.config()
+                            .installationDirectory()
                             .resolve(NAME + "-" + requireNonNull(provisionedMetadata.get(ToolHandler.TOOL_VERSION)));
                     Files.move(installDir, versionedInstallDir, StandardCopyOption.REPLACE_EXISTING);
                     provisionedMetadata.put(HOME, versionedInstallDir.toString());
@@ -220,6 +221,7 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
                     .toString();
         }
         return ProcessBuilderExecutor.execute(
-                execution.toBuilder().command(command).build(), context.toolTimeout());
+                execution.toBuilder().command(command).build(),
+                context.config().maxRunDuration().toMillis());
     }
 }

@@ -97,7 +97,8 @@ public class JdkProvider implements ToolProvider, ToolDetector, ToolExecutor {
             command = Paths.get(home).resolve("bin").resolve(exeName(command)).toString();
         }
         return ProcessBuilderExecutor.execute(
-                execution.toBuilder().command(command).build(), context.toolTimeout());
+                execution.toBuilder().command(command).build(),
+                context.config().maxRunDuration().toMillis());
     }
 
     private String exeName(String command) {

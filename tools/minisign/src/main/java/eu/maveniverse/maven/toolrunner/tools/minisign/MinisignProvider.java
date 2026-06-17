@@ -167,7 +167,7 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
 
         if (isLatest) {
             version = Provisioners.discoverGHLatest(context, "github", "jedisct1", "minisign")
-                    .getName();
+                    .getTag();
         } else {
             version = requireNonNull(metadata.get(ToolHandler.TOOL_VERSION));
         }

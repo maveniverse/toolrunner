@@ -208,7 +208,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
 
         if (isLatest) {
             version = Provisioners.discoverGHLatest(context, "github", "sigstore", "cosign")
-                    .getName();
+                    .getTag();
             if (version.startsWith("v")) {
                 version = version.substring(1);
             }

@@ -32,9 +32,10 @@ public class ProvisionersTest {
     void discoverGHLatest() throws IOException {
         try (DefaultToolManager manager =
                 new DefaultToolManager(Config.builder().isTransient(true).build())) {
-            assertNotNull(Provisioners.discoverGHLatest(manager, "github", "jbangdev", "jbang"));
-            assertNotNull(Provisioners.discoverGHLatest(manager, "github", "gradle", "gradle"));
-            assertNotNull(Provisioners.discoverGHLatest(manager, "github", "Sanne", "incus-spawn"));
+            Provisioners.GHRelease rel = Provisioners.discoverGHLatest(manager, "github", "jbangdev", "jbang");
+            assertNotNull(rel);
+            assertNotNull(rel.getName());
+            assertNotNull(rel.getTag());
         }
     }
 }

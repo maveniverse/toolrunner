@@ -258,13 +258,11 @@ public final class Provisioners {
         }
     }
 
-    public static class GHRelease {
+    public static final class GHRelease {
         private final String name;
         private final String tag;
 
         private GHRelease(String name, String tag) {
-            requireNonNull(name);
-            requireNonNull(tag);
             this.name = name;
             this.tag = tag;
         }
@@ -295,8 +293,14 @@ public final class Provisioners {
         URI uri = URI.create("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest");
         try (FileUtils.TempFile tempFile = httpGet(toolContext, serverId, uri);
                 JsonReader reader = new JsonReader(Files.newBufferedReader(tempFile.getPath()))) {
-            Map<String, Object> data = new Gson().fromJson(reader, Map.class);
-            return new GHRelease((String) data.get("name"), (String) data.get("tag_name"));
+            try {
+                Map<String, Object> data = new Gson().fromJson(reader, Map.class);
+                String name = requireNonNull((String) data.get("name"));
+                String tag = requireNonNull((String) data.get("tag_name"));
+                return new GHRelease(name, tag);
+            } catch (Exception e) {
+                throw new IllegalStateException("Unexpected GH response", e);
+            }
         }
     }
 

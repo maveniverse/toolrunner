@@ -7,6 +7,7 @@
  */
 package eu.maveniverse.maven.toolrunner.tools.jdk;
 
+import eu.maveniverse.maven.shared.core.fs.FileUtils;
 import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolContext;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
 import java.util.stream.Collectors;
@@ -39,11 +41,12 @@ import java.util.stream.Stream;
  */
 class JdkTools {
     /**
-     * Returns {@code true} if command is supported. Moreover, if execution wants to set environment variables,
-     * it will be refused and must be executed as forked process.
+     * Returns {@code true} if command is supported. Aside, if environment variables are needed, or std IN is provided
+     * or if current working directory was changed (assuming then arguments are related to it), we will rather fork.
      */
     static boolean supportsTool(ToolContext context, Map<String, String> metadata, ToolExecution execution) {
-        if (execution.environmentVariables().isPresent()) {
+        Path currentCwd = FileUtils.discoverUserCurrentWorkingDirectory();
+        if (execution.environmentVariables().isPresent() || execution.stdIn().isPresent() || !Objects.equals(currentCwd, execution.cwd())) {
             return false;
         }
         return ToolProvider.findFirst(execution.command()).isPresent();
@@ -65,13 +68,15 @@ class JdkTools {
             stdOut = execution.stdOut().orElse(IOTools.nullOutputStream());
             stdErr = execution.stdErr().orElse(IOTools.nullOutputStream());
         }
-        PrintStream out = stdOut instanceof PrintStream ? (PrintStream) stdOut : new PrintStream(stdOut);
-        PrintStream err = stdErr instanceof PrintStream ? (PrintStream) stdErr : new PrintStream(stdErr);
+        PrintStream out = stdOut instanceof PrintStream ? (PrintStream) stdOut : new PrintStream(stdOut, true);
+        PrintStream err = stdErr instanceof PrintStream ? (PrintStream) stdErr : new PrintStream(stdErr, true);
         int exitCode = toolProvider.run(out, err, execution.arguments().toArray(new String[0]));
         String stdOutString = null;
         String stdErrString = null;
         if (execution.grabOutputAsString()) {
+            out.flush();
             stdOutString = stdOut.toString();
+            err.flush();
             stdErrString = stdErr.toString();
         }
         return new ProcessBuilderExecutor.ProcessBuilderToolExecutorResult(exitCode, stdOutString, stdErrString);

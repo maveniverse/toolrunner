@@ -24,6 +24,7 @@ import eu.maveniverse.maven.toolrunner.shared.spi.ToolContext;
 import eu.maveniverse.maven.toolrunner.shared.spi.ToolProvider;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -112,8 +113,25 @@ public class DefaultToolManager implements ToolManager, ToolContext {
     @Override
     public void close() throws IOException {
         if (closed.compareAndSet(false, true)) {
+            ArrayList<Exception> exceptions = new ArrayList<>();
+            for (ToolProvider toolProvider : toolProviders.values()) {
+                try {
+                    toolProvider.close();
+                } catch (Exception e) {
+                    exceptions.add(e);
+                }
+            }
             if (config.isTransient()) {
-                FileUtils.deleteRecursively(config.installationDirectory());
+                try {
+                    FileUtils.deleteRecursively(config.installationDirectory());
+                } catch (IOException e) {
+                    exceptions.add(e);
+                }
+            }
+            if (!exceptions.isEmpty()) {
+                IOException ex = new IOException("Error closing tool manager");
+                exceptions.forEach(ex::addSuppressed);
+                throw ex;
             }
         }
     }

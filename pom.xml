@@ -307,6 +307,11 @@
         <artifactId>plexus-interpolation</artifactId>
         <version>1.29</version>
       </dependency>
+      <dependency>
+        <groupId>org.apache.maven.executor</groupId>
+        <artifactId>maven-executor</artifactId>
+        <version>1.0.0</version>
+      </dependency>
 
       <!-- Nisse -->
       <dependency>

@@ -15,9 +15,9 @@ import eu.maveniverse.maven.toolrunner.shared.ToolExecution;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandle;
 import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -48,18 +48,32 @@ public class MavenProviderTest {
 
             // provision latest Maven
             ToolHandle handle = handler.toolHandle();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            handle.execute(ToolExecution.ofCommand("mvn")
-                    .addArguments("-v", "-q")
-                    .stdOut(baos)
-                    .build());
+            assertEquals(handle.toolMetadata().get(ToolHandler.TOOL_VERSION), mavenVersion(handle, null));
             assertEquals(
                     handle.toolMetadata().get(ToolHandler.TOOL_VERSION),
-                    baos.toString().trim());
+                    mavenVersion(handle, MavenProvider.MODE_EMBEDDED));
+            assertEquals(
+                    handle.toolMetadata().get(ToolHandler.TOOL_VERSION),
+                    mavenVersion(handle, MavenProvider.MODE_FORKED));
 
             // detect again, we should have one more provisioned
             detected = handler.detectTool();
             assertEquals(1, detected.size());
+        }
+    }
+
+    private String mavenVersion(ToolHandle handle, String mode) {
+        Instant now = Instant.now();
+        try {
+            ToolExecution.Builder builder = ToolExecution.ofCommand("mvn").addArguments("-v", "-q");
+            if (mode != null) {
+                builder.toolRunnerData(MavenProvider.MODE, mode);
+            }
+            return handle.execute(builder.build()).stdOutString().orElse("").trim();
+        } finally {
+            // Just a quick glance between two modes; embedded is two order of magnitudes faster than forked
+            // but embedded does not cope with JVM/Env variables and extensions properly.
+            // System.out.println("Duration mode=" + mode + " == " + Duration.between(now, Instant.now()));
         }
     }
 }

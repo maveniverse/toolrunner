@@ -325,6 +325,11 @@
         <artifactId>takari-archiver</artifactId>
         <version>1.0.8</version>
       </dependency>
+      <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>2.14.0</version>
+      </dependency>
 
       <dependency>
         <groupId>org.junit.jupiter</groupId>

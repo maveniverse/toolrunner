@@ -207,8 +207,11 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
         }
 
         if (isLatest) {
-            // TODO: discover
-            version = "3.0.6";
+            version = Provisioners.discoverGHLatest(context, "github", "sigstore", "cosign")
+                    .getName();
+            if (version.startsWith("v")) {
+                version = version.substring(1);
+            }
         } else {
             version = requireNonNull(metadata.get(ToolHandler.TOOL_VERSION));
         }

@@ -162,7 +162,7 @@ public class IsxProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         // this is very new tool, we just go for latest
         Path installDir = context.installationDirectory().resolve(NAME);
 
-        boolean installationSuccess = false;
+        boolean installationSuccess;
         try (FileUtils.TempFile dl = Provisioners.httpGet(
                 context, "github", URI.create("https://raw.githubusercontent.com/Sanne/incus-spawn/main/get-isx.sh"))) {
             ToolExecution cmd = ToolExecution.ofCommand("sh")

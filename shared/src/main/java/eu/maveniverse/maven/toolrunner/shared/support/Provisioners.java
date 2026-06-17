@@ -10,6 +10,8 @@ package eu.maveniverse.maven.toolrunner.shared.support;
 import static java.util.Objects.requireNonNull;
 
 import ca.vanzyl.provisio.archive.UnArchiver;
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
 import eu.maveniverse.maven.mima.context.Context;
 import eu.maveniverse.maven.mima.extensions.mhc4.MavenHttpClient4Factory;
 import eu.maveniverse.maven.shared.core.fs.FileUtils;
@@ -169,6 +171,9 @@ public final class Provisioners {
      */
     public static FileUtils.TempFile httpGet(ToolContext toolContext, String serverId, URI resourceUri)
             throws IOException {
+        requireNonNull(toolContext);
+        requireNonNull(serverId);
+        requireNonNull(resourceUri);
         try (Context context = toolContext.createMimaContext()) {
             HttpClientBuilder builder = new MavenHttpClient4Factory(context)
                     .createResolutionClient(
@@ -225,6 +230,7 @@ public final class Provisioners {
      * Unpacks file to given directory. Supports ZIP and TAR (GZ + XZ).
      */
     public static void unpack(ToolContext toolContext, Path source, Path target, boolean useRoot) throws IOException {
+        requireNonNull(toolContext);
         requireNonNull(source);
         requireNonNull(target);
         if (!Files.isRegularFile(source)) {
@@ -252,8 +258,51 @@ public final class Provisioners {
         }
     }
 
+    public static class GHRelease {
+        private final String name;
+        private final String tag;
+
+        private GHRelease(String name, String tag) {
+            requireNonNull(name);
+            requireNonNull(tag);
+            this.name = name;
+            this.tag = tag;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getTag() {
+            return tag;
+        }
+
+        @Override
+        public String toString() {
+            return "GHRelease{" + "name='" + name + '\'' + ", tag='" + tag + '\'' + '}';
+        }
+    }
+
+    /**
+     * GH: discovers latest release of a given {@code owner/repo} project.
+     */
+    public static GHRelease discoverGHLatest(ToolContext toolContext, String serverId, String owner, String repo)
+            throws IOException {
+        requireNonNull(toolContext);
+        requireNonNull(serverId);
+        requireNonNull(owner);
+        requireNonNull(repo);
+        URI uri = URI.create("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest");
+        try (FileUtils.TempFile tempFile = httpGet(toolContext, serverId, uri);
+                JsonReader reader = new JsonReader(Files.newBufferedReader(tempFile.getPath()))) {
+            Map<String, Object> data = new Gson().fromJson(reader, Map.class);
+            return new GHRelease((String) data.get("name"), (String) data.get("tag_name"));
+        }
+    }
+
     public static Optional<Map<String, String>> loadMetadata(ToolContext toolContext, Path toolHome)
             throws IOException {
+        requireNonNull(toolContext);
         requireNonNull(toolHome);
         if (!Files.isDirectory(toolHome)) {
             throw new IllegalArgumentException("Tool home is not a directory");
@@ -273,6 +322,7 @@ public final class Provisioners {
 
     public static void saveMetadata(ToolContext toolContext, Path toolHome, Map<String, String> metadata)
             throws IOException {
+        requireNonNull(toolContext);
         requireNonNull(toolHome);
         requireNonNull(metadata);
         if (!Files.isDirectory(toolHome)) {

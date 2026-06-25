@@ -8,6 +8,7 @@
 package eu.maveniverse.maven.toolrunner.tools.jdk;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import eu.maveniverse.maven.toolrunner.shared.Config;
@@ -16,6 +17,7 @@ import eu.maveniverse.maven.toolrunner.shared.ToolHandler;
 import eu.maveniverse.maven.toolrunner.shared.ToolManager;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -50,6 +52,31 @@ public class JdkProviderTest {
             ToolHandle handle = maybeHandle.orElseThrow(() -> new NoSuchElementException("No value present"));
             assertTrue(!handle.commands().isEmpty());
             assertEquals(detected.get(0), handle.toolMetadata());
+        }
+    }
+
+    @Test
+    void noSuchVersion() throws IOException {
+        // transient = true (clean up after yourself)
+        // allowPathDetection = false (ignore user installed ones)
+        try (ToolManager toolManager = ToolManager.create(Config.builder()
+                .installationDirectory(Paths.get("target/installation-directory"))
+                .tmpDirectory(Paths.get("target/temp-directory"))
+                .isTransient(true)
+                .allowOsPathEnvDetection(false)
+                .build())) {
+            assertTrue(toolManager.supportedToolNames().contains(JdkProvider.NAME));
+
+            Optional<ToolHandler> maybeHandler = toolManager.selectToolByName("jdk");
+            assertTrue(maybeHandler.isPresent());
+            ToolHandler handler = maybeHandler.orElseThrow(() -> new NoSuchElementException("No value present"));
+
+            // detect jdk, it is always supported, should find 1
+            Map<String, String> myTool = new HashMap<>();
+            myTool.put(ToolHandler.TOOL_NAME, "jdk");
+            myTool.put(ToolHandler.TOOL_VERSION, "2026");
+            Optional<ToolHandle> maybeHandle = handler.selectTool(myTool);
+            assertFalse(maybeHandle.isPresent());
         }
     }
 }

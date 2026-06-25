@@ -72,9 +72,9 @@ public class DefaultToolHandler implements ToolHandler {
                 }
             }
             if (selected == null) {
-                if (detected.isEmpty()) {
+                if (!metadata.isEmpty()) {
                     return Optional.empty();
-                } else {
+                } else if (!detected.isEmpty()) {
                     selected = detected.get(0);
                 }
             }

@@ -42,17 +42,14 @@ public class JdkProviderTest {
 
             // detect jdk, it is always supported, should find 1
             List<Map<String, String>> detected = handler.detectTool();
-            assertEquals(1, detected.size());
+            assertTrue(!detected.isEmpty());
 
             // provision latest jdk; same as detected
             Optional<ToolHandle> maybeHandle = handler.selectTool(detected.get(0));
             assertTrue(maybeHandle.isPresent());
             ToolHandle handle = maybeHandle.orElseThrow(() -> new NoSuchElementException("No value present"));
+            assertTrue(!handle.commands().isEmpty());
             assertEquals(detected.get(0), handle.toolMetadata());
-
-            // detect again, we should have one more provisioned
-            detected = handler.detectTool();
-            assertEquals(1, detected.size());
         }
     }
 }

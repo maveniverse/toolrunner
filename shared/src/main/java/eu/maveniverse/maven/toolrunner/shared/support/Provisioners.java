@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -299,7 +300,10 @@ public final class Provisioners {
                 String tag = requireNonNull((String) data.get("tag_name"));
                 return new GHRelease(name, tag);
             } catch (Exception e) {
-                throw new IllegalStateException("Unexpected GH response", e);
+                throw new IllegalStateException(
+                        "Unexpected GH response: "
+                                + new String(Files.readAllBytes(tempFile.getPath()), StandardCharsets.UTF_8),
+                        e);
             }
         }
     }

@@ -87,6 +87,9 @@
               <scriptVariables>
                 <projectVersion>${project.version}</projectVersion>
               </scriptVariables>
+              <environmentVariables>
+                <MAVEN_OPTS>-e</MAVEN_OPTS>
+              </environmentVariables>
               <pomExcludes>
                 <!-- fails often, relies heavily on search-api CSC backend -->
                 <pomExclude>libyear-1/pom.xml</pomExclude>

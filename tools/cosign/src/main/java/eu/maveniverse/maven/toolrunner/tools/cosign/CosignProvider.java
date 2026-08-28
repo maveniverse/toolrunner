@@ -196,7 +196,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
             osName = "windows";
             arch = "amd64";
             ext = ".exe";
-        } else if (Objects.equals("macosx", context.detectedOs().get("name"))) {
+        } else if (Objects.equals("osx", context.detectedOs().get("name"))) {
             osName = "darwin";
             arch = context.detectedOs().get("arch");
             if ("x86_64".equals(arch)) {

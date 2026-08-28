@@ -238,7 +238,7 @@ public final class Provisioners {
             throw new IllegalArgumentException("source is not a regular file");
         }
         Files.createDirectories(target);
-        UnArchiver.builder().useRoot(useRoot).build().unarchive(source.toFile(), target.toFile());
+        UnArchiver.builder().useRoot(useRoot).build().unarchive(source, target);
         LOGGER.debug("Unpack (useRoot={}) from {} to {}", useRoot, source, target);
         tree(target, 0, (p, d) -> {
             String prefix = IntStream.range(0, d).mapToObj(i -> " ").collect(Collectors.joining(""));

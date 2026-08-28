@@ -38,6 +38,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@code minisign} tool provider.
@@ -49,6 +51,8 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
     private static final String PREFIX = NAME + ".";
 
     public static final String HOME = PREFIX + "home";
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     // ToolProvider
 
@@ -158,8 +162,8 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
         } else if (Objects.equals("windows", context.detectedOs().get("name"))
                 && Objects.equals("64", context.detectedOs().get("bitness"))) {
             clsext = "win64.zip";
-        } else if (Objects.equals("macosx", context.detectedOs().get("name"))) {
-            clsext = "macosx.zip";
+        } else if (Objects.equals("osx", context.detectedOs().get("name"))) {
+            clsext = "macos.zip";
         } else {
             // unsupported OS
             return Optional.empty();
@@ -173,13 +177,14 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
         }
         String uri = String.format(
                 "https://github.com/jedisct1/minisign/releases/download/%s/minisign-%s-%s", version, version, clsext);
+        log.debug("Downloading minisign from {}", uri);
         String homePath = NAME + "-" + version;
         Path installDir = context.config().installationDirectory().resolve(homePath);
         try (FileUtils.TempFile dl = Provisioners.httpGet(context, "github.com", URI.create(uri))) {
             Provisioners.unpack(context, dl.getPath(), installDir, false);
         }
         // shuffle around
-        if (!Objects.equals("macosx", context.detectedOs().get("name"))) {
+        if (!Objects.equals("osx", context.detectedOs().get("name"))) {
             String arch = context.detectedOs().get("arch");
             Files.move(installDir.resolve(arch).resolve(EXE_NAME), installDir.resolve(EXE_NAME));
             if (!IS_WINDOWS) {

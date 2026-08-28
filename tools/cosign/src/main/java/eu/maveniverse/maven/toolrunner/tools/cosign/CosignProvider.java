@@ -40,6 +40,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@code cosign} tool provider.
@@ -51,6 +53,8 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
     private static final String PREFIX = NAME + ".";
 
     public static final String HOME = PREFIX + "home";
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     // ToolProvider
 
@@ -183,7 +187,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
             arch = context.detectedOs().get("arch");
             if ("x86_64".equals(arch)) {
                 arch = "amd64";
-            } else if ("aarch_64".equals(arch)) {
+            } else if ("aarch64".equals(arch) || "aarch_64".equals(arch)) {
                 arch = "arm64";
             }
             ext = "";
@@ -192,7 +196,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
             osName = "windows";
             arch = "amd64";
             ext = ".exe";
-        } else if (Objects.equals("macosx", context.detectedOs().get("name"))) {
+        } else if (Objects.equals("osx", context.detectedOs().get("name"))) {
             osName = "darwin";
             arch = context.detectedOs().get("arch");
             if ("x86_64".equals(arch)) {
@@ -217,6 +221,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
         }
         String uri = String.format(
                 "https://github.com/sigstore/cosign/releases/download/v%s/cosign-%s-%s%s", version, osName, arch, ext);
+        log.debug("Downloading cosign from {}", uri);
         String homePath = NAME + "-" + version;
         Path installDir = context.config().installationDirectory().resolve(homePath);
         Path executable = installDir.resolve(EXE_NAME);

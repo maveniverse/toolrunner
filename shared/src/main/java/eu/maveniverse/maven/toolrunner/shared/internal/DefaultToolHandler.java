@@ -76,6 +76,8 @@ public class DefaultToolHandler implements ToolHandler {
                     return Optional.empty();
                 } else if (!detected.isEmpty()) {
                     selected = detected.get(0);
+                } else {
+                    return Optional.empty();
                 }
             }
             return Optional.of(new DefaultToolHandle(toolContext, selected, toolProvider.toolExecutor()));

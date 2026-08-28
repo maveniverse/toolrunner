@@ -88,7 +88,7 @@
                 <projectVersion>${project.version}</projectVersion>
               </scriptVariables>
               <environmentVariables>
-                <MAVEN_ARGS>-e -X</MAVEN_ARGS>
+                <MAVEN_ARGS>-e</MAVEN_ARGS>
               </environmentVariables>
               <pomExcludes>
                 <!-- fails often, relies heavily on search-api CSC backend -->

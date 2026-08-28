@@ -6,4 +6,4 @@
  * https://www.eclipse.org/legal/epl-v20.html
  */
 String buildLog = new File(basedir, 'build.log').text
-assert buildLog.contains('cosign: A tool for Container Signing, Verification and Storage in an OCI registry.')
+assert buildLog.contains('cosign: A tool for Container Signing, Verification and Storage in an OCI registry')

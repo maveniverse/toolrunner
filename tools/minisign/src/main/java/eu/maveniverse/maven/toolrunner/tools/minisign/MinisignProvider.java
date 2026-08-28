@@ -184,7 +184,7 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
             Provisioners.unpack(context, dl.getPath(), installDir, false);
         }
         // shuffle around
-        if (!Objects.equals("macosx", context.detectedOs().get("name"))) {
+        if (!Objects.equals("osx", context.detectedOs().get("name"))) {
             String arch = context.detectedOs().get("arch");
             Files.move(installDir.resolve(arch).resolve(EXE_NAME), installDir.resolve(EXE_NAME));
             if (!IS_WINDOWS) {

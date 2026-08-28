@@ -183,7 +183,7 @@ public class CosignProvider implements ToolProvider, ToolDetector, ToolProvision
             arch = context.detectedOs().get("arch");
             if ("x86_64".equals(arch)) {
                 arch = "amd64";
-            } else if ("aarch_64".equals(arch)) {
+            } else if ("aarch64".equals(arch) || "aarch_64".equals(arch)) {
                 arch = "arm64";
             }
             ext = "";

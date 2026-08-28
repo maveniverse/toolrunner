@@ -159,7 +159,7 @@ public class MinisignProvider implements ToolProvider, ToolDetector, ToolProvisi
                 && Objects.equals("64", context.detectedOs().get("bitness"))) {
             clsext = "win64.zip";
         } else if (Objects.equals("macosx", context.detectedOs().get("name"))) {
-            clsext = "macosx.zip";
+            clsext = "macos.zip";
         } else {
             // unsupported OS
             return Optional.empty();

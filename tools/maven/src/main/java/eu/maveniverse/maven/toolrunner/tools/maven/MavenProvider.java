@@ -149,15 +149,18 @@ public class MavenProvider implements ToolProvider, ToolDetector, ToolProvisione
                     metadata,
                     ToolExecution.ofCommand("mvn").addArguments("-v", "-q").build());
             if (result.success()) {
-                HashMap<String, String> md = new HashMap<>();
-                md.put(ToolHandler.TOOL_NAME, NAME);
-                md.put(
-                        ToolHandler.TOOL_VERSION,
-                        result.stdOutString()
-                                .orElseThrow(() -> new NoSuchElementException("No value present"))
-                                .trim());
-                md.put(MavenProvider.HOME, home.toString());
-                return Optional.of(md);
+                // check for $MAVEN_HOME/bin/m2.conf as some tools like Homebrew alter distro (why?)
+                if (Files.isRegularFile(home.resolve("bin").resolve("m2.conf"))) {
+                    HashMap<String, String> md = new HashMap<>();
+                    md.put(ToolHandler.TOOL_NAME, NAME);
+                    md.put(
+                            ToolHandler.TOOL_VERSION,
+                            result.stdOutString()
+                                    .orElseThrow(() -> new NoSuchElementException("No value present"))
+                                    .trim());
+                    md.put(MavenProvider.HOME, home.toString());
+                    return Optional.of(md);
+                }
             }
             return Optional.empty();
         } catch (InterruptedException e) {

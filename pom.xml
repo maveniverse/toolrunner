@@ -76,7 +76,7 @@
     <version.resolver>1.9.27</version.resolver>
     <version.mavenPluginTools>3.15.2</version.mavenPluginTools>
     <version.slf4j>2.0.18</version.slf4j>
-    <version.nisse>0.9.10</version.nisse>
+    <version.nisse>0.9.11</version.nisse>
   </properties>
 
   <dependencyManagement>

@@ -52,6 +52,9 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
 
     private static final String ENV_HOME = "ANT_HOME";
 
+    // TODO: discover this; this is only here as crutch
+    private static final String ANT_VERSION = System.getProperty("toolrunner.ant.version", "1.10.18");
+
     // ToolProvider
 
     @Override
@@ -158,8 +161,7 @@ public class AntProvider implements ToolProvider, ToolDetector, ToolProvisioner,
         String homePath;
         String version = null;
         if (isLatest) {
-            // TODO: discover
-            version = "1.10.17";
+            version = ANT_VERSION;
             uri = String.format("https://dlcdn.apache.org/ant/binaries/apache-ant-%s-bin.zip", version);
             homePath = NAME + "-" + version;
         } else {
